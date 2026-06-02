@@ -1,0 +1,206 @@
+import Chat from "../models/Chat.js";
+import Message from "../models/Message.js";
+import Product from "../models/Product.js";
+
+export const createChat = async (req, res) => {
+  try {
+    const { productId } = req.body;
+
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
+    }
+
+    const isAuctionWinner =
+      product.saleType === "auction" &&
+      product.auctionStatus === "ended" &&
+      product.winner?.toString() === req.user._id.toString();
+
+    const isFixedBuyer =
+      product.saleType === "fixed" &&
+      product.buyer?.toString() === req.user._id.toString();
+
+    if (!isAuctionWinner && !isFixedBuyer) {
+      return res.status(403).json({ message: "채팅을 시작할 권한이 없습니다." });
+    }
+
+    const existing = await Chat.findOne({ product: productId, buyer: req.user._id });
+
+    if (existing) {
+      return res.status(200).json({ message: "기존 채팅방", chat: existing });
+    }
+
+    const chat = await Chat.create({
+      product: product._id,
+      buyer: req.user._id,
+      seller: product.seller,
+    });
+
+    return res.status(201).json({ message: "채팅방 생성 성공", chat });
+  } catch (error) {
+    console.error("createChat error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+export const getChatDetail = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const chat = await Chat.findById(chatId)
+      .populate("product", "title images saleType")
+      .populate("buyer", "name")
+      .populate("seller", "name");
+
+    if (!chat) {
+      return res.status(404).json({ message: "채팅방을 찾을 수 없습니다." });
+    }
+
+    const isParticipant =
+      chat.buyer._id.toString() === req.user._id.toString() ||
+      chat.seller._id.toString() === req.user._id.toString();
+
+    if (!isParticipant) {
+      return res.status(403).json({ message: "접근 권한이 없습니다." });
+    }
+
+    return res.status(200).json({ chat });
+  } catch (error) {
+    console.error("getChatDetail error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+export const getMyChats = async (req, res) => {
+  try {
+    const chats = await Chat.find({
+      $or: [{ buyer: req.user._id }, { seller: req.user._id }],
+      isActive: true,
+    })
+      .populate("product", "title images saleType")
+      .populate("buyer", "name")
+      .populate("seller", "name")
+      .populate("lastMessage", "content createdAt")
+      .sort({ updatedAt: -1 });
+
+    return res.status(200).json({ message: "채팅 목록 조회 성공", chats });
+  } catch (error) {
+    console.error("getMyChats error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+export const getChatMessages = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) {
+      return res.status(404).json({ message: "채팅방을 찾을 수 없습니다." });
+    }
+
+    const isParticipant =
+      chat.buyer.toString() === req.user._id.toString() ||
+      chat.seller.toString() === req.user._id.toString();
+
+    if (!isParticipant) {
+      return res.status(403).json({ message: "접근 권한이 없습니다." });
+    }
+
+    const messages = await Message.find({ chat: chatId })
+      .populate("sender", "name")
+      .sort({ createdAt: 1 });
+
+    await Message.updateMany(
+      { chat: chatId, sender: { $ne: req.user._id }, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    return res.status(200).json({ message: "메시지 목록 조회 성공", messages });
+  } catch (error) {
+    console.error("getChatMessages error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+export const closeChat = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) {
+      return res.status(404).json({ message: "채팅방을 찾을 수 없습니다." });
+    }
+
+    const isParticipant =
+      chat.buyer.toString() === req.user._id.toString() ||
+      chat.seller.toString() === req.user._id.toString();
+
+    if (!isParticipant) {
+      return res.status(403).json({ message: "접근 권한이 없습니다." });
+    }
+
+    chat.isActive = false;
+    await chat.save();
+
+    const io = req.app.get("io");
+    io.to(`chat:${chatId}`).emit("chat:closed", {
+      chatId,
+      reason: "상대방이 대화를 종료했습니다.",
+    });
+
+    return res.status(200).json({ message: "대화 종료 완료" });
+  } catch (error) {
+    console.error("closeChat error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+export const sendMessage = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { content } = req.body;
+
+    if (!content?.trim()) {
+      return res.status(400).json({ message: "메시지 내용을 입력해주세요." });
+    }
+
+    const chat = await Chat.findById(chatId);
+
+    if (!chat || !chat.isActive) {
+      return res.status(404).json({ message: "채팅방을 찾을 수 없습니다." });
+    }
+
+    const isParticipant =
+      chat.buyer.toString() === req.user._id.toString() ||
+      chat.seller.toString() === req.user._id.toString();
+
+    if (!isParticipant) {
+      return res.status(403).json({ message: "접근 권한이 없습니다." });
+    }
+
+    const message = await Message.create({
+      chat: chatId,
+      sender: req.user._id,
+      content: content.trim(),
+    });
+
+    const populated = await Message.findById(message._id).populate("sender", "name");
+
+    await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id });
+
+    const io = req.app.get("io");
+    io.to(`chat:${chatId}`).emit("chat:message", {
+      chatId,
+      message: populated,
+    });
+
+    return res.status(201).json({ message: "메시지 전송 성공", data: populated });
+  } catch (error) {
+    console.error("sendMessage error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
