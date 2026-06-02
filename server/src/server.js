@@ -81,17 +81,16 @@ io.on("connection", (socket) => {
   });
 });
 
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
+
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log("MongoDB connected");
-
     await restoreAuctionTimers(io);
     await restoreAuctionStartTimers(io);
-
-    server.listen(PORT, () => {
-      console.log(`Server listening on port ${PORT}`);
-    });
   })
   .catch((error) => {
     console.error("MongoDB connection error:", error.message);
