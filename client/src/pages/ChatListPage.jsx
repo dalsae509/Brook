@@ -72,17 +72,24 @@ function ChatListPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="font-semibold truncate">{other.name}</p>
-                    {chat.lastMessage && (
-                      <p className="text-xs text-slate-400 flex-shrink-0 ml-2">
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {chat.unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
+                          {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
+                        </span>
+                      )}
+                      <p className="text-xs text-slate-400">
                         {new Date(chat.updatedAt).toLocaleDateString()}
                       </p>
-                    )}
+                    </div>
                   </div>
                   <p className="text-sm text-slate-500 truncate">
                     {chat.product?.title ?? chat.wantedPost?.title ?? ""}
                   </p>
                   {chat.lastMessage && (
-                    <p className="text-sm text-slate-400 truncate">{chat.lastMessage.content}</p>
+                    <p className={`text-sm truncate ${chat.unreadCount > 0 ? "text-slate-800 font-medium" : "text-slate-400"}`}>
+                      {chat.lastMessage.content || "📷 이미지"}
+                    </p>
                   )}
                 </div>
               </Link>

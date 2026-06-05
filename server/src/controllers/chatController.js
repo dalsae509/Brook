@@ -85,7 +85,20 @@ export const getMyChats = async (req, res) => {
       .populate("lastMessage", "content createdAt")
       .sort({ updatedAt: -1 });
 
-    return res.status(200).json({ message: "채팅 목록 조회 성공", chats });
+    const chatIds = chats.map((c) => c._id);
+    const unreadCounts = await Message.aggregate([
+      { $match: { chat: { $in: chatIds }, sender: { $ne: req.user._id }, isRead: false } },
+      { $group: { _id: "$chat", count: { $sum: 1 } } },
+    ]);
+    const unreadMap = {};
+    unreadCounts.forEach((u) => { unreadMap[String(u._id)] = u.count; });
+
+    const result = chats.map((c) => ({
+      ...c.toObject(),
+      unreadCount: unreadMap[String(c._id)] || 0,
+    }));
+
+    return res.status(200).json({ message: "채팅 목록 조회 성공", chats: result });
   } catch (error) {
     console.error("getMyChats error:", error);
     return res.status(500).json({ message: "서버 오류" });
@@ -114,10 +127,22 @@ export const getChatMessages = async (req, res) => {
       .populate("sender", "name")
       .sort({ createdAt: 1 });
 
+    const hasUnread = await Message.exists({
+      chat: chatId, sender: { $ne: req.user._id }, isRead: false,
+    });
+
     await Message.updateMany(
       { chat: chatId, sender: { $ne: req.user._id }, isRead: false },
       { $set: { isRead: true } }
     );
+
+    if (hasUnread) {
+      const io = req.app.get("io");
+      io.to(`chat:${chatId}`).emit("chat:read", {
+        chatId,
+        readBy: String(req.user._id),
+      });
+    }
 
     return res.status(200).json({ message: "메시지 목록 조회 성공", messages });
   } catch (error) {

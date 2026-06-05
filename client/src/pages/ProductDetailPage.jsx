@@ -22,6 +22,7 @@ function ProductDetailPage() {
   const { user } = useAuthStore();
 
   const [product, setProduct] = useState(null);
+  const [notFound, setNotFound] = useState(false);
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [durationMinutes, setDurationMinutes] = useState(5);
@@ -84,7 +85,11 @@ function ProductDetailPage() {
       const res = await axiosInstance.get(`/api/products/${id}`);
       setProduct(res.data.product);
     } catch (error) {
-      toast.error(error.response?.data?.message || "상품 상세 조회 실패");
+      if (error.response?.status === 404) {
+        setNotFound(true);
+      } else {
+        toast.error(error.response?.data?.message || "상품 상세 조회 실패");
+      }
     }
   }, [id]);
 
@@ -402,7 +407,17 @@ function ProductDetailPage() {
       <div className="bg-white rounded-2xl shadow p-6 h-64 bg-slate-200 rounded-xl" />
     </div>
   );
-  if (!product) return <div>상품이 없습니다.</div>;
+  if (notFound) return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+      <p className="text-5xl mb-4">🗑️</p>
+      <h2 className="text-xl font-bold text-slate-800 mb-2">삭제된 상품입니다</h2>
+      <p className="text-slate-500 mb-6">이 상품은 판매자가 삭제했거나 존재하지 않습니다.</p>
+      <button onClick={() => navigate("/")} className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-700">
+        홈으로
+      </button>
+    </div>
+  );
+  if (!product) return null;
 
   const isFixed = product.saleType === "fixed";
 

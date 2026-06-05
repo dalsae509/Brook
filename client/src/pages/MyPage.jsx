@@ -160,22 +160,25 @@ function MyPage() {
           <div className="space-y-4">
             {myBids.map((bid) => (
               <div key={bid._id} className="bg-white rounded-2xl shadow p-5">
-                <Link
-                  to={`/products/${bid.product?._id}`}
-                  className="text-xl font-semibold text-blue-600"
-                >
-                  {bid.product?.title || "삭제된 상품"}
-                </Link>
+                {bid.product?._id ? (
+                  <Link to={`/products/${bid.product._id}`} className="text-xl font-semibold text-blue-600 hover:underline">
+                    {bid.product.title}
+                  </Link>
+                ) : (
+                  <p className="text-xl font-semibold text-slate-400">삭제된 상품</p>
+                )}
                 <p className="mt-2">입찰 금액: {bid.amount.toLocaleString()}원</p>
                 <p className="text-sm text-slate-500 mt-1">
                   입찰 시간: {new Date(bid.createdAt).toLocaleString()}
                 </p>
-                <p className="text-sm mt-1">
-                  상품 상태:{" "}
-                  {bid.product?.auctionStatus === "pending" && "대기중"}
-                  {bid.product?.auctionStatus === "live" && "진행중"}
-                  {bid.product?.auctionStatus === "ended" && "종료됨"}
-                </p>
+                {bid.product?.auctionStatus && (
+                  <p className="text-sm mt-1">
+                    상품 상태:{" "}
+                    {bid.product.auctionStatus === "pending" && "대기중"}
+                    {bid.product.auctionStatus === "live" && "진행중"}
+                    {bid.product.auctionStatus === "ended" && "종료됨"}
+                  </p>
+                )}
               </div>
             ))}
           </div>

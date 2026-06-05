@@ -56,15 +56,25 @@ function ChatRoomPage() {
 
     const handleReconnect = () => { socket.emit("chat:join", chatId); };
 
+    const handleRead = (payload) => {
+      if (payload.chatId !== chatId) return;
+      if (payload.readBy === user.id) return;
+      setMessages((prev) =>
+        prev.map((m) => (m.sender._id === user.id ? { ...m, isRead: true } : m))
+      );
+    };
+
     socket.on("connect", handleReconnect);
     socket.on("chat:message", handleMessage);
     socket.on("chat:closed", handleClosed);
+    socket.on("chat:read", handleRead);
 
     return () => {
       socket.emit("chat:leave", chatId);
       socket.off("connect", handleReconnect);
       socket.off("chat:message", handleMessage);
       socket.off("chat:closed", handleClosed);
+      socket.off("chat:read", handleRead);
     };
   }, [chatId]);
 
@@ -215,9 +225,16 @@ function ChatRoomPage() {
                       </div>
                     )}
                   </div>
-                  <p className={`text-xs text-slate-400 mt-1 ${isMine ? "text-right" : "ml-1"}`}>
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </p>
+                  <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : "justify-start ml-1"}`}>
+                    {isMine && (
+                      <span className={`text-xs ${msg.isRead ? "text-blue-400" : "text-slate-300"}`}>
+                        {msg.isRead ? "읽음" : "안읽음"}
+                      </span>
+                    )}
+                    <span className="text-xs text-slate-400">
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
