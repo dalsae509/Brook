@@ -163,10 +163,10 @@ export const closeChat = async (req, res) => {
 export const sendMessage = async (req, res) => {
   try {
     const { chatId } = req.params;
-    const { content } = req.body;
+    const { content, imageUrl } = req.body;
 
-    if (!content?.trim()) {
-      return res.status(400).json({ message: "메시지 내용을 입력해주세요." });
+    if (!content?.trim() && !imageUrl) {
+      return res.status(400).json({ message: "메시지 내용 또는 이미지를 입력해주세요." });
     }
 
     const chat = await Chat.findById(chatId);
@@ -186,7 +186,8 @@ export const sendMessage = async (req, res) => {
     const message = await Message.create({
       chat: chatId,
       sender: req.user._id,
-      content: content.trim(),
+      content: content?.trim() || "",
+      imageUrl: imageUrl || null,
     });
 
     const populated = await Message.findById(message._id).populate("sender", "name");
