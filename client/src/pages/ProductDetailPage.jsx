@@ -8,6 +8,7 @@ import ReviewSection from "../components/ReviewSection";
 import { getBidUnit } from "../utils/bidUnit";
 import { CATEGORIES } from "../utils/categories";
 import { getCloudinaryUrl } from "../utils/cloudinary";
+import ReportModal from "../components/ReportModal";
 
 const FIXED_STATUS_LABELS = { available: "판매중", reserved: "예약중", sold: "판매완료" };
 const FIXED_STATUS_COLORS = {
@@ -29,6 +30,7 @@ function ProductDetailPage() {
   const [bidAmount, setBidAmount] = useState("");
   const [timeLeft, setTimeLeft] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [editImages, setEditImages] = useState([]);
   const [editImageFiles, setEditImageFiles] = useState([]);
@@ -640,12 +642,30 @@ function ProductDetailPage() {
         )}
 
         <div className="space-y-2 text-lg">
-          <p>
-            판매자:{" "}
-            <Link to={`/users/${product.seller?._id}`} className="text-blue-600 hover:underline">
-              {product.seller?.name}
-            </Link>
-          </p>
+          <div className="flex items-center gap-3">
+            <p>
+              판매자:{" "}
+              <Link to={`/users/${product.seller?._id}`} className="text-blue-600 hover:underline">
+                {product.seller?.name}
+              </Link>
+            </p>
+            {user && !isSeller && (
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-0.5 rounded-lg"
+              >
+                신고
+              </button>
+            )}
+          </div>
+          {showReportModal && (
+            <ReportModal
+              reportedUserId={product.seller?._id}
+              reportedUserName={product.seller?.name}
+              productId={product._id}
+              onClose={() => setShowReportModal(false)}
+            />
+          )}
 
           {isFixed ? (
             <>

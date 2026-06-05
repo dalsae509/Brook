@@ -29,6 +29,13 @@ function AdminPage() {
   const [wantedSearch, setWantedSearch] = useState("");
   const [wantedLoading, setWantedLoading] = useState(true);
 
+  const [reports, setReports] = useState([]);
+  const [reportTotal, setReportTotal] = useState(0);
+  const [reportPage, setReportPage] = useState(1);
+  const [reportTotalPages, setReportTotalPages] = useState(1);
+  const [reportStatus, setReportStatus] = useState("pending");
+  const [reportsLoading, setReportsLoading] = useState(true);
+
   const searchDebounceRef = useRef(null);
 
   const fetchUsers = useCallback(async () => {
@@ -75,9 +82,37 @@ function AdminPage() {
     }
   }, [wantedPage, wantedSearch]);
 
+  const fetchReports = useCallback(async () => {
+    try {
+      setReportsLoading(true);
+      const res = await axiosInstance.get("/api/reports", {
+        params: { status: reportStatus, page: reportPage },
+      });
+      setReports(res.data.reports || []);
+      setReportTotal(res.data.total || 0);
+      setReportTotalPages(res.data.totalPages || 1);
+    } catch (error) {
+      toast.error("신고 목록 불러오기 실패");
+    } finally {
+      setReportsLoading(false);
+    }
+  }, [reportStatus, reportPage]);
+
+  const handleProcessReport = async (reportId, status) => {
+    try {
+      await axiosInstance.patch(`/api/reports/${reportId}`, { status });
+      setReports((prev) => prev.filter((r) => r._id !== reportId));
+      setReportTotal((prev) => prev - 1);
+      toast.success(status === "reviewed" ? "신고 확인 처리됨" : "신고 기각 처리됨");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "처리 실패");
+    }
+  };
+
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { fetchWantedPosts(); }, [fetchWantedPosts]);
+  useEffect(() => { fetchReports(); }, [fetchReports]);
 
   const handleDeleteUser = async (userId, userName) => {
     if (!window.confirm(`"${userName}" 사용자를 삭제하시겠습니까?`)) return;
@@ -145,6 +180,7 @@ function AdminPage() {
           { key: "users", label: `사용자 관리 (${users.length})` },
           { key: "products", label: `상품 관리 (${productTotal})` },
           { key: "wanted", label: `삽니다 관리 (${wantedTotal})` },
+          { key: "reports", label: `신고 관리 (${reportTotal})` },
         ].map((t) => (
           <button
             key={t.key}
@@ -371,6 +407,104 @@ function AdminPage() {
               <button onClick={() => setWantedPage((p) => Math.max(1, p - 1))} disabled={wantedPage === 1} className="px-4 py-2 rounded-lg border hover:border-slate-400 disabled:opacity-40">이전</button>
               <span className="text-slate-600">{wantedPage} / {wantedTotalPages}</span>
               <button onClick={() => setWantedPage((p) => Math.min(wantedTotalPages, p + 1))} disabled={wantedPage === wantedTotalPages} className="px-4 py-2 rounded-lg border hover:border-slate-400 disabled:opacity-40">다음</button>
+            </div>
+          )}
+        </div>
+      )}
+      )}
+
+      {/* 신고 관리 */}
+      {tab === "reports" && (
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            {[
+              { v: "pending", l: "대기 중" },
+              { v: "reviewed", l: "처리됨" },
+              { v: "dismissed", l: "기각됨" },
+              { v: "all", l: "전체" },
+            ].map((s) => (
+              <button
+                key={s.v}
+                onClick={() => { setReportStatus(s.v); setReportPage(1); }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition border ${
+                  reportStatus === s.v ? "bg-slate-800 text-white" : "text-slate-600 hover:border-slate-400"
+                }`}
+              >
+                {s.l}
+              </button>
+            ))}
+          </div>
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {reportsLoading ? (
+              <div className="p-6 text-slate-500">불러오는 중...</div>
+            ) : reports.length === 0 ? (
+              <div className="p-8 text-center text-slate-400">신고 내역이 없습니다.</div>
+            ) : (
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-slate-600">
+                  <tr>
+                    <th className="text-left px-5 py-3">신고자</th>
+                    <th className="text-left px-5 py-3">피신고자</th>
+                    <th className="text-left px-5 py-3">사유</th>
+                    <th className="text-left px-5 py-3">내용</th>
+                    <th className="text-left px-5 py-3">상태</th>
+                    <th className="text-left px-5 py-3">일시</th>
+                    {reportStatus === "pending" && <th className="px-5 py-3"></th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {reports.map((r) => (
+                    <tr key={r._id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 text-slate-500">{r.reporter?.name}</td>
+                      <td className="px-5 py-3 font-medium">
+                        {r.reportedUser?.name}
+                        <span className="ml-1 text-xs text-slate-400">({r.reportedUser?.brookScore?.toFixed(1) ?? "-"}점)</span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{r.reason}</span>
+                      </td>
+                      <td className="px-5 py-3 text-slate-500 max-w-[150px] truncate">{r.description || "-"}</td>
+                      <td className="px-5 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          r.status === "pending" ? "bg-yellow-100 text-yellow-700"
+                          : r.status === "reviewed" ? "bg-red-100 text-red-700"
+                          : "bg-slate-100 text-slate-500"
+                        }`}>
+                          {r.status === "pending" ? "대기" : r.status === "reviewed" ? "확인" : "기각"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</td>
+                      {reportStatus === "pending" && (
+                        <td className="px-5 py-3">
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleProcessReport(r._id, "reviewed")}
+                              className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                            >
+                              확인
+                            </button>
+                            <button
+                              onClick={() => handleProcessReport(r._id, "dismissed")}
+                              className="text-xs border border-slate-300 px-2 py-1 rounded hover:bg-slate-50"
+                            >
+                              기각
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+            )}
+          </div>
+          {reportTotalPages > 1 && (
+            <div className="flex justify-center items-center gap-4">
+              <button onClick={() => setReportPage((p) => Math.max(1, p - 1))} disabled={reportPage === 1} className="px-4 py-2 rounded-lg border hover:border-slate-400 disabled:opacity-40">이전</button>
+              <span className="text-slate-600">{reportPage} / {reportTotalPages}</span>
+              <button onClick={() => setReportPage((p) => Math.min(reportTotalPages, p + 1))} disabled={reportPage === reportTotalPages} className="px-4 py-2 rounded-lg border hover:border-slate-400 disabled:opacity-40">다음</button>
             </div>
           )}
         </div>

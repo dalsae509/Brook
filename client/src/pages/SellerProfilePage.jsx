@@ -2,17 +2,22 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axiosInstance from "../api/axios";
 import { getCloudinaryUrl } from "../utils/cloudinary";
+import BrookScore from "../components/BrookScore";
+import ReportModal from "../components/ReportModal";
+import useAuthStore from "../store/authStore";
 
 const FIXED_STATUS_LABELS = { available: "판매중", reserved: "예약중", sold: "판매완료" };
 const AUCTION_STATUS_LABELS = { pending: "대기중", live: "진행중", ended: "종료됨" };
 
 function SellerProfilePage() {
   const { userId } = useParams();
+  const { user } = useAuthStore();
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -50,25 +55,49 @@ function SellerProfilePage() {
   return (
     <div className="space-y-8">
       {/* 프로필 헤더 */}
-      <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-6">
-        <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center text-2xl font-bold text-slate-500">
-          {seller.name[0]}
+      <div className="bg-white rounded-2xl shadow p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center text-2xl font-bold text-slate-500 shrink-0">
+            {seller.name[0]}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold">{seller.name}</h1>
+              {user && user.id !== userId && (
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-3 py-1 rounded-lg"
+                >
+                  신고
+                </button>
+              )}
+            </div>
+            <p className="text-slate-500 text-sm mt-1">가입일: {new Date(seller.createdAt).toLocaleDateString()}</p>
+            {averageRating !== null && (
+              <p className="text-yellow-500 mt-1 text-sm">
+                {"★".repeat(Math.round(averageRating))}{"☆".repeat(5 - Math.round(averageRating))}{" "}
+                <span className="text-slate-600">{averageRating}점 ({reviews.length}건)</span>
+              </p>
+            )}
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">{seller.name}</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            가입일: {new Date(seller.createdAt).toLocaleDateString()}
-          </p>
-          {averageRating !== null ? (
-            <p className="text-yellow-500 mt-1">
-              {"★".repeat(Math.round(averageRating))}{"☆".repeat(5 - Math.round(averageRating))}{" "}
-              <span className="text-slate-600 text-sm">{averageRating}점 ({reviews.length}건)</span>
-            </p>
-          ) : (
-            <p className="text-slate-400 text-sm mt-1">아직 받은 리뷰가 없습니다.</p>
-          )}
+        <div className="mt-4 pt-4 border-t">
+          <BrookScore
+            score={seller.brookScore}
+            completedDeals={seller.completedDeals}
+            totalDeals={seller.totalDeals}
+            size="lg"
+          />
         </div>
       </div>
+
+      {showReportModal && (
+        <ReportModal
+          reportedUserId={userId}
+          reportedUserName={seller.name}
+          onClose={() => setShowReportModal(false)}
+        />
+      )}
 
       {/* 판매 중 상품 */}
       <section>

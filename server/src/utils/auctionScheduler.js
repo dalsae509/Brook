@@ -3,6 +3,7 @@ import Bid from "../models/Bid.js";
 import Chat from "../models/Chat.js";
 import User from "../models/User.js";
 import { createNotification } from "./notificationService.js";
+import { recalculateBrookScore } from "./brookScoreUtil.js";
 
 const auctionTimers = new Map();
 const auctionStartTimers = new Map();
@@ -58,6 +59,10 @@ export const finalizeAuction = async (productId, io, endedBy = "system") => {
           seller: product.seller,
         });
       }
+
+      // 경매 낙찰 — 판매자 totalDeals 증가
+      await User.findByIdAndUpdate(product.seller, { $inc: { totalDeals: 1 } });
+      recalculateBrookScore(product.seller).catch(() => {});
     } else if (product.onFailedAuction === "convert" && product.fixedPrice != null) {
       product.saleType = "fixed";
       product.fixedStatus = "available";

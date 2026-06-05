@@ -1,5 +1,6 @@
 import Review from "../models/Review.js";
 import Product from "../models/Product.js";
+import { recalculateBrookScore } from "../utils/brookScoreUtil.js";
 
 export const createReview = async (req, res) => {
   try {
@@ -43,6 +44,8 @@ export const createReview = async (req, res) => {
     });
 
     const populated = await Review.findById(review._id).populate("reviewer", "name");
+
+    recalculateBrookScore(product.seller).catch(() => {});
 
     return res.status(201).json({ message: "리뷰 작성 성공", review: populated });
   } catch (error) {

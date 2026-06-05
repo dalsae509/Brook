@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axiosInstance from "../api/axios";
 import useAuthStore from "../store/authStore";
+import BrookScore from "../components/BrookScore";
 
 const FIXED_STATUS_LABELS = { available: "판매중", reserved: "예약중", sold: "판매완료" };
 const AUCTION_STATUS_LABELS = { pending: "대기중", live: "진행중", ended: "종료됨" };
@@ -101,7 +102,16 @@ function MyPage() {
 
   return (
     <div className="space-y-10">
-      <h1 className="text-2xl sm:text-3xl font-bold">마이페이지</h1>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <h1 className="text-2xl sm:text-3xl font-bold">마이페이지</h1>
+        <div className="bg-white rounded-2xl shadow px-5 py-4 min-w-[200px]">
+          <BrookScore
+            score={user?.brookScore ?? 36.5}
+            completedDeals={user?.completedDeals ?? 0}
+            totalDeals={user?.totalDeals ?? 0}
+          />
+        </div>
+      </div>
 
       <section>
         <h2 className="text-xl sm:text-2xl font-semibold mb-4">내가 등록한 상품</h2>

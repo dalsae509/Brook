@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Chat from "../models/Chat.js";
+import User from "../models/User.js";
 import { createNotification } from "../utils/notificationService.js";
+import { recalculateBrookScore } from "../utils/brookScoreUtil.js";
 
 export const purchaseProduct = async (req, res) => {
   try {
@@ -47,6 +49,9 @@ export const purchaseProduct = async (req, res) => {
     } finally {
       session.endSession();
     }
+
+    // 거래 시작 — 판매자 totalDeals 증가
+    await User.findByIdAndUpdate(product.seller, { $inc: { totalDeals: 1 } });
 
     return res.status(200).json({ message: "구매 예약 성공", product, chat });
   } catch (error) {
@@ -110,6 +115,10 @@ export const confirmTrade = async (req, res) => {
       });
     }
 
+    // 거래 완료 — 판매자 completedDeals 증가 + 브룩 지수 재계산
+    await User.findByIdAndUpdate(existing.seller, { $inc: { completedDeals: 1 } });
+    recalculateBrookScore(existing.seller).catch(() => {});
+
     return res.status(200).json({ message: "거래 완료", product });
   } catch (error) {
     console.error("confirmTrade error:", error);
@@ -140,6 +149,10 @@ export const confirmAuctionTrade = async (req, res) => {
       productId: product._id,
       productTitle: product.title,
     });
+
+    // 거래 완료 — 판매자 completedDeals 증가 + 브룩 지수 재계산
+    await User.findByIdAndUpdate(product.seller, { $inc: { completedDeals: 1 } });
+    recalculateBrookScore(product.seller).catch(() => {});
 
     return res.status(200).json({ message: "거래 완료", product });
   } catch (error) {

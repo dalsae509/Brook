@@ -313,9 +313,15 @@ export const deleteProduct = async (req, res) => {
     const isLocked =
       (product.saleType === "fixed" && product.fixedStatus === "reserved") ||
       (product.saleType === "auction" && product.auctionStatus === "live");
-
     if (isLocked) {
       return res.status(400).json({ message: "거래가 진행 중인 상품은 삭제할 수 없습니다." });
+    }
+
+    const isCompleted =
+      (product.saleType === "fixed" && product.fixedStatus === "sold") ||
+      (product.saleType === "auction" && product.auctionStatus === "ended" && product.winner);
+    if (isCompleted) {
+      return res.status(400).json({ message: "거래가 완료된 상품은 삭제할 수 없습니다." });
     }
 
     await product.deleteOne();

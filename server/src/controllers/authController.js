@@ -50,6 +50,9 @@ export const register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        brookScore: user.brookScore,
+        completedDeals: user.completedDeals,
+        totalDeals: user.totalDeals,
       },
     });
   } catch (error) {
@@ -110,6 +113,9 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        brookScore: user.brookScore,
+        completedDeals: user.completedDeals,
+        totalDeals: user.totalDeals,
       },
     });
   } catch (error) {

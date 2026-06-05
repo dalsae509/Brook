@@ -11,6 +11,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import wantedRoutes from "./routes/wantedRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use("/api/notifications", apiLimiter, notificationRoutes);
 app.use("/api/reviews", apiLimiter, reviewRoutes);
 app.use("/api/admin", apiLimiter, adminRoutes);
 app.use("/api/wanted", apiLimiter, wantedRoutes);
+app.use("/api/reports", apiLimiter, reportRoutes);
 
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err.message);

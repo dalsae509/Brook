@@ -95,7 +95,7 @@ export const toggleWishlist = async (req, res) => {
 export const getUserProfile = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId).select("name createdAt");
+    const user = await User.findById(userId).select("name createdAt brookScore completedDeals totalDeals reportCount");
     if (!user) {
       return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
     }
