@@ -230,29 +230,31 @@ function HomePage() {
         </div>
 
         {/* 가격 범위 */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <span className="text-sm text-slate-500 shrink-0">가격 범위</span>
-          <input
-            type="number"
-            placeholder="최소 금액"
-            value={minPriceInput}
-            min={0}
-            onChange={(e) => handlePriceChange("minPrice", e.target.value)}
-            className="border rounded-lg px-4 py-2 w-36 text-sm"
-          />
-          <span className="text-slate-400">~</span>
-          <input
-            type="number"
-            placeholder="최대 금액"
-            value={maxPriceInput}
-            min={0}
-            onChange={(e) => handlePriceChange("maxPrice", e.target.value)}
-            className="border rounded-lg px-4 py-2 w-36 text-sm"
-          />
-          <span className="text-sm text-slate-500">원</span>
+          <div className="flex items-center gap-2 flex-1">
+            <input
+              type="number"
+              placeholder="최소 금액"
+              value={minPriceInput}
+              min={0}
+              onChange={(e) => handlePriceChange("minPrice", e.target.value)}
+              className="border rounded-lg px-3 py-2 text-sm flex-1 min-w-0"
+            />
+            <span className="text-slate-400 shrink-0">~</span>
+            <input
+              type="number"
+              placeholder="최대 금액"
+              value={maxPriceInput}
+              min={0}
+              onChange={(e) => handlePriceChange("maxPrice", e.target.value)}
+              className="border rounded-lg px-3 py-2 text-sm flex-1 min-w-0"
+            />
+            <span className="text-sm text-slate-500 shrink-0">원</span>
+          </div>
           <button
             onClick={handleReset}
-            className="ml-auto bg-slate-800 text-white rounded-lg px-4 py-2 text-sm hover:bg-slate-700"
+            className="bg-slate-800 text-white rounded-lg px-4 py-2 text-sm hover:bg-slate-700 shrink-0"
           >
             필터 초기화
           </button>
