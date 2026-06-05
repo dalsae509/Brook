@@ -100,7 +100,7 @@ function ChatRoomPage() {
   const isActive = chat.isActive;
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-120px)]">
+    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-120px)]">
       {/* 헤더 */}
       <div className="bg-white rounded-t-2xl shadow px-4 py-3 flex items-center gap-3">
         <button

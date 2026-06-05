@@ -131,7 +131,7 @@ function CreateProductPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow p-8">
+    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow p-4 sm:p-8">
       <h1 className="text-3xl font-bold mb-6">상품 등록</h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">

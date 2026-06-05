@@ -129,6 +129,7 @@ function AdminPage() {
           {usersLoading ? (
             <div className="p-6 text-slate-500">불러오는 중...</div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-600">
                 <tr>
@@ -170,6 +171,7 @@ function AdminPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       )}
@@ -187,6 +189,7 @@ function AdminPage() {
             {productsLoading ? (
               <div className="p-6 text-slate-500">불러오는 중...</div>
             ) : (
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-slate-600">
                   <tr>
@@ -238,6 +241,7 @@ function AdminPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
 
