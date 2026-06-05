@@ -607,7 +607,7 @@ function ProductDetailPage() {
         ) : (
           <>
             <div className="flex items-start justify-between mb-3">
-              <h1 className="text-3xl font-bold">{product.title}</h1>
+              <h1 className="text-xl sm:text-3xl font-bold">{product.title}</h1>
               {user && !isSeller && (
                 <button
                   onClick={handleToggleWishlist}

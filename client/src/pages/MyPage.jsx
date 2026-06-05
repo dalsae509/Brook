@@ -94,10 +94,10 @@ function MyPage() {
 
   return (
     <div className="space-y-10">
-      <h1 className="text-3xl font-bold">마이페이지</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold">마이페이지</h1>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4">내가 등록한 상품</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold mb-4">내가 등록한 상품</h2>
         {myProducts.length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
             등록한 상품이 없습니다.
@@ -142,7 +142,7 @@ function MyPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4">내 입찰 내역</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold mb-4">내 입찰 내역</h2>
         {myBids.length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
             입찰한 내역이 없습니다.
@@ -174,7 +174,7 @@ function MyPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4">내가 낙찰받은 상품</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold mb-4">내가 낙찰받은 상품</h2>
         {myWins.length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
             낙찰받은 상품이 없습니다.
@@ -201,7 +201,7 @@ function MyPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4">즉시구매 내역</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold mb-4">즉시구매 내역</h2>
         {myPurchases.length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
             즉시구매한 상품이 없습니다.
@@ -276,7 +276,7 @@ function MyPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4">찜한 상품</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold mb-4">찜한 상품</h2>
         {myWishlist.length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
             찜한 상품이 없습니다.

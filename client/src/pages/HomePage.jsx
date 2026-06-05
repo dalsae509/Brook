@@ -145,7 +145,7 @@ function HomePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">상품 목록</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold">상품 목록</h1>
 
       {/* 탭 */}
       <div className="flex gap-2">
