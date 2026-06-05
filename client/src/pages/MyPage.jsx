@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axiosInstance from "../api/axios";
 import useAuthStore from "../store/authStore";
@@ -19,12 +19,14 @@ function getProductStatus(product) {
 
 function MyPage() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [myProducts, setMyProducts] = useState([]);
   const [myBids, setMyBids] = useState([]);
   const [myWins, setMyWins] = useState([]);
   const [myPurchases, setMyPurchases] = useState([]);
   const [myWishlist, setMyWishlist] = useState([]);
   const [myReviews, setMyReviews] = useState([]);
+  const [myWantedPosts, setMyWantedPosts] = useState([]);
   const [averageRating, setAverageRating] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,13 +45,14 @@ function MyPage() {
     try {
       setLoading(true);
 
-      const [productsRes, bidsRes, winsRes, purchasesRes, wishlistRes, reviewsRes] = await Promise.all([
+      const [productsRes, bidsRes, winsRes, purchasesRes, wishlistRes, reviewsRes, wantedRes] = await Promise.all([
         axiosInstance.get("/api/users/me/products"),
         axiosInstance.get("/api/users/me/bids"),
         axiosInstance.get("/api/users/me/wins"),
         axiosInstance.get("/api/users/me/purchases"),
         axiosInstance.get("/api/users/me/wishlist"),
         axiosInstance.get(`/api/reviews/user/${user.id}`),
+        axiosInstance.get("/api/wanted/my"),
       ]);
 
       setMyProducts(productsRes.data.products || []);
@@ -58,6 +61,7 @@ function MyPage() {
       setMyPurchases(purchasesRes.data.products || []);
       setMyWishlist(wishlistRes.data.wishlist || []);
       setMyReviews(reviewsRes.data.reviews || []);
+      setMyWantedPosts(wantedRes.data.posts || []);
       setAverageRating(reviewsRes.data.averageRating);
     } catch (error) {
       toast.error(error.response?.data?.message || "마이페이지 불러오기 실패");
@@ -309,6 +313,54 @@ function MyPage() {
                     ? `${product.fixedPrice?.toLocaleString()}원`
                     : `현재가 ${product.currentPrice?.toLocaleString()}원`}
                 </p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl sm:text-2xl font-semibold">내 삽니다 게시글</h2>
+          <Link
+            to="/wanted/new"
+            className="text-sm bg-slate-800 text-white px-3 py-1.5 rounded-lg hover:bg-slate-700"
+          >
+            + 글쓰기
+          </Link>
+        </div>
+        {myWantedPosts.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow p-8 text-center">
+            <p className="text-3xl mb-2">🛒</p>
+            <p className="text-slate-500">작성한 삽니다 게시글이 없습니다.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {myWantedPosts.map((post) => (
+              <Link
+                key={post._id}
+                to={`/wanted/${post._id}`}
+                className="flex items-center justify-between bg-white rounded-2xl shadow p-4 hover:shadow-md transition gap-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      post.status === "open"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-slate-100 text-slate-500"
+                    }`}>
+                      {post.status === "open" ? "구매중" : "거래완료"}
+                    </span>
+                    <span className="text-xs text-slate-400">{post.category}</span>
+                  </div>
+                  <p className="font-medium text-slate-800 truncate">{post.title}</p>
+                </div>
+                <div className="text-right shrink-0 text-sm text-slate-400">
+                  {post.targetPrice && (
+                    <p className="text-slate-600 font-medium">~{post.targetPrice.toLocaleString()}원</p>
+                  )}
+                  <p>{new Date(post.createdAt).toLocaleDateString()}</p>
+                </div>
               </Link>
             ))}
           </div>

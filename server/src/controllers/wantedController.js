@@ -1,6 +1,18 @@
 import WantedPost from "../models/WantedPost.js";
 import WantedComment from "../models/WantedComment.js";
 import Chat from "../models/Chat.js";
+import { createNotification } from "../utils/notificationService.js";
+
+export const getMyPosts = async (req, res) => {
+  try {
+    const posts = await WantedPost.find({ author: req.user._id })
+      .sort({ createdAt: -1 });
+    res.json({ posts });
+  } catch (error) {
+    console.error("getMyPosts error:", error.message);
+    res.status(500).json({ message: "서버 오류" });
+  }
+};
 
 export const getPosts = async (req, res) => {
   try {
@@ -108,6 +120,15 @@ export const addComment = async (req, res) => {
     });
 
     const populated = await WantedComment.findById(comment._id).populate("author", "name");
+
+    // 게시글 작성자에게 알림
+    const io = req.app.get("io");
+    await createNotification(io, post.author, {
+      type: "wanted_comment",
+      message: `"${post.title}" 구매 요청에 새 댓글이 달렸습니다.`,
+      wantedPostId: post._id,
+    });
+
     res.status(201).json({ message: "댓글 등록 성공", comment: populated });
   } catch (error) {
     console.error("addComment error:", error.message);
@@ -152,6 +173,14 @@ export const startChatWithCommenter = async (req, res) => {
       wantedPost: post._id,
       buyer: req.user._id,
       seller: comment.author,
+    });
+
+    // 댓글 작성자(판매자)에게 채팅 요청 알림
+    const io = req.app.get("io");
+    await createNotification(io, comment.author, {
+      type: "wanted_chat_started",
+      message: `"${post.title}" 구매 요청자가 채팅을 요청했습니다.`,
+      wantedPostId: post._id,
     });
 
     res.status(201).json({ message: "채팅방 생성 성공", chat });
