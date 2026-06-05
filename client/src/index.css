@@ -12,3 +12,10 @@ body {
   word-break: keep-all;
   line-height: 1.6;
 }
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #94a3b8;
+}

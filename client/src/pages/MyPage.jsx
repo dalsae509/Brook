@@ -99,8 +99,9 @@ function MyPage() {
       <section>
         <h2 className="text-xl sm:text-2xl font-semibold mb-4">내가 등록한 상품</h2>
         {myProducts.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
-            등록한 상품이 없습니다.
+          <div className="bg-white rounded-2xl shadow p-8 text-center">
+            <p className="text-3xl mb-2">📦</p>
+            <p className="text-slate-500">등록한 상품이 없습니다.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -144,8 +145,9 @@ function MyPage() {
       <section>
         <h2 className="text-xl sm:text-2xl font-semibold mb-4">내 입찰 내역</h2>
         {myBids.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
-            입찰한 내역이 없습니다.
+          <div className="bg-white rounded-2xl shadow p-8 text-center">
+            <p className="text-3xl mb-2">🏷️</p>
+            <p className="text-slate-500">입찰한 내역이 없습니다.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -176,8 +178,9 @@ function MyPage() {
       <section>
         <h2 className="text-xl sm:text-2xl font-semibold mb-4">내가 낙찰받은 상품</h2>
         {myWins.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
-            낙찰받은 상품이 없습니다.
+          <div className="bg-white rounded-2xl shadow p-8 text-center">
+            <p className="text-3xl mb-2">🏆</p>
+            <p className="text-slate-500">낙찰받은 상품이 없습니다.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -278,8 +281,9 @@ function MyPage() {
       <section>
         <h2 className="text-xl sm:text-2xl font-semibold mb-4">찜한 상품</h2>
         {myWishlist.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
-            찜한 상품이 없습니다.
+          <div className="bg-white rounded-2xl shadow p-8 text-center">
+            <p className="text-3xl mb-2">❤️</p>
+            <p className="text-slate-500">찜한 상품이 없습니다.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4">

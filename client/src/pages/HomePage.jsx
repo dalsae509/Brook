@@ -35,6 +35,7 @@ function HomePage() {
   const [minPriceInput, setMinPriceInput] = useState(filters.minPrice);
   const [maxPriceInput, setMaxPriceInput] = useState(filters.maxPrice);
 
+  const [filterOpen, setFilterOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -170,6 +171,22 @@ function HomePage() {
 
       {/* 필터 */}
       <div className="bg-white rounded-2xl shadow p-5 space-y-4">
+        {/* 모바일 필터 토글 */}
+        <div className="flex items-center justify-between sm:hidden">
+          <span className="text-sm font-medium text-slate-700">
+            필터
+            {(filters.search || filters.category || filters.status || filters.minPrice || filters.maxPrice) && (
+              <span className="ml-2 bg-slate-800 text-white text-xs px-1.5 py-0.5 rounded-full">적용 중</span>
+            )}
+          </span>
+          <button
+            onClick={() => setFilterOpen((v) => !v)}
+            className="text-sm text-slate-500 border rounded-lg px-3 py-1.5 hover:border-slate-400"
+          >
+            {filterOpen ? "접기 ▲" : "펼치기 ▼"}
+          </button>
+        </div>
+        <div className={`${filterOpen ? "block" : "hidden"} sm:block space-y-4`}>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           <input
             type="text"
@@ -259,6 +276,7 @@ function HomePage() {
             필터 초기화
           </button>
         </div>
+        </div>
       </div>
 
       {/* 상품 목록 */}
@@ -274,8 +292,10 @@ function HomePage() {
           ))}
         </div>
       ) : products.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 shadow text-center text-slate-500">
-          조건에 맞는 상품이 없습니다.
+        <div className="bg-white rounded-2xl p-10 shadow text-center">
+          <p className="text-4xl mb-3">🔍</p>
+          <p className="text-slate-700 font-medium mb-1">조건에 맞는 상품이 없습니다</p>
+          <p className="text-slate-400 text-sm">필터를 변경하거나 다른 키워드로 검색해보세요.</p>
         </div>
       ) : (
         <>

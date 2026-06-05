@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import axiosInstance from "../api/axios";
 import useAuthStore from "../store/authStore";
+import { getCloudinaryUrl } from "../utils/cloudinary";
 
 function ChatListPage() {
   const { user } = useAuthStore();
@@ -43,8 +44,10 @@ function ChatListPage() {
       <h1 className="text-3xl font-bold">채팅</h1>
 
       {chats.length === 0 ? (
-        <div className="bg-white rounded-2xl p-10 shadow text-center text-slate-500">
-          진행 중인 채팅이 없습니다.
+        <div className="bg-white rounded-2xl p-10 shadow text-center">
+          <p className="text-4xl mb-3">💬</p>
+          <p className="text-slate-700 font-medium mb-1">진행 중인 채팅이 없습니다</p>
+          <p className="text-slate-400 text-sm">낙찰되거나 구매한 상품이 있으면 채팅방이 생성됩니다.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -58,7 +61,7 @@ function ChatListPage() {
               >
                 <div className="w-14 h-14 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0">
                   {chat.product?.images?.[0] ? (
-                    <img src={chat.product.images[0]} alt="" className="w-full h-full object-cover" />
+                    <img src={getCloudinaryUrl(chat.product.images[0], { width: 80, height: 80 })} alt="" className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">없음</div>
                   )}
