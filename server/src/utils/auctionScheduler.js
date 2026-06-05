@@ -1,5 +1,6 @@
 import Product from "../models/Product.js";
 import Bid from "../models/Bid.js";
+import Chat from "../models/Chat.js";
 import User from "../models/User.js";
 import { createNotification } from "./notificationService.js";
 
@@ -28,33 +29,43 @@ export const finalizeAuction = async (productId, io, endedBy = "system") => {
   try {
     clearAuctionTimer(productId);
 
-    const product = await Product.findById(productId);
+    // auctionStatus: "live" 조건으로 동시 호출 중 하나만 통과
+    const product = await Product.findOneAndUpdate(
+      { _id: productId, auctionStatus: "live" },
+      { $set: { auctionStatus: "ended", endTime: new Date() } },
+      { new: true }
+    );
 
-    if (!product) {
-      return null;
-    }
-
-    if (product.auctionStatus !== "live") {
-      return null;
-    }
+    if (!product) return null;
 
     const highestBid = await Bid.findOne({ product: productId })
       .sort({ amount: -1, createdAt: 1 })
       .populate("bidder", "name");
 
-    product.auctionStatus = "ended";
-    product.endTime = new Date();
-
     if (highestBid) {
       product.winner = highestBid.bidder._id;
       product.currentPrice = highestBid.amount;
+      await Product.findByIdAndUpdate(productId, {
+        winner: highestBid.bidder._id,
+        currentPrice: highestBid.amount,
+      });
+
+      const existingChat = await Chat.findOne({ product: productId, buyer: highestBid.bidder._id });
+      if (!existingChat) {
+        await Chat.create({
+          product: productId,
+          buyer: highestBid.bidder._id,
+          seller: product.seller,
+        });
+      }
     } else if (product.onFailedAuction === "convert" && product.fixedPrice != null) {
-      // 유찰 → 즉시 판매 전환
       product.saleType = "fixed";
       product.fixedStatus = "available";
+      await Product.findByIdAndUpdate(productId, {
+        saleType: "fixed",
+        fixedStatus: "available",
+      });
     }
-
-    await product.save();
 
     const payload = {
       productId: String(product._id),
@@ -80,6 +91,20 @@ export const finalizeAuction = async (productId, io, endedBy = "system") => {
       await createNotification(io, highestBid.bidder._id, {
         type: "auction_won",
         message: `"${product.title}" 경매에서 낙찰되었습니다! 낙찰가: ${highestBid.amount.toLocaleString()}원`,
+        productId: product._id,
+        productTitle: product.title,
+      });
+
+      await createNotification(io, highestBid.bidder._id, {
+        type: "chat_created",
+        message: `"${product.title}" 낙찰을 축하드립니다! 판매자와의 채팅방이 생성되었습니다.`,
+        productId: product._id,
+        productTitle: product.title,
+      });
+
+      await createNotification(io, product.seller, {
+        type: "chat_created",
+        message: `"${product.title}" 경매가 종료되었습니다. 낙찰자와의 채팅방이 생성되었습니다.`,
         productId: product._id,
         productTitle: product.title,
       });
@@ -134,18 +159,25 @@ export const scheduleAuctionEnd = (productId, endTime, io) => {
 export const triggerAuctionStart = async (productId, durationMinutes, io) => {
   clearAuctionStartTimer(productId);
 
-  const product = await Product.findById(productId);
-  if (!product || product.auctionStatus !== "pending") return;
-
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
 
-  product.auctionStatus = "live";
-  product.startTime = startTime;
-  product.endTime = endTime;
-  product.scheduledStartTime = null;
-  product.scheduledDurationMinutes = null;
-  await product.save();
+  // auctionStatus: "pending" 조건으로 동시 호출 중 하나만 통과
+  const product = await Product.findOneAndUpdate(
+    { _id: productId, auctionStatus: "pending" },
+    {
+      $set: {
+        auctionStatus: "live",
+        startTime,
+        endTime,
+        scheduledStartTime: null,
+        scheduledDurationMinutes: null,
+      },
+    },
+    { new: true }
+  );
+
+  if (!product) return;
 
   scheduleAuctionEnd(product._id, endTime, io);
 

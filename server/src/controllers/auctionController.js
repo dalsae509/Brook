@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Bid from "../models/Bid.js";
 import {
@@ -143,29 +144,45 @@ export const placeBid = async (req, res) => {
       });
     }
 
-    const updatedProduct = await Product.findOneAndUpdate(
-      {
-        _id: productId,
-        auctionStatus: "live",
-        currentPrice: { $lte: numericAmount - bidUnit },
-      },
-      { $set: { currentPrice: numericAmount } },
-      { new: true }
-    );
+    const session = await mongoose.startSession();
+    let updatedProduct, populatedBid, isConflict = false;
 
-    if (!updatedProduct) {
+    try {
+      await session.withTransaction(async () => {
+        isConflict = false;
+        updatedProduct = await Product.findOneAndUpdate(
+          {
+            _id: productId,
+            auctionStatus: "live",
+            currentPrice: { $lte: numericAmount - bidUnit },
+          },
+          { $set: { currentPrice: numericAmount } },
+          { new: true, session }
+        );
+
+        if (!updatedProduct) {
+          isConflict = true;
+          throw new Error("CONFLICT");
+        }
+
+        const [bid] = await Bid.create(
+          [{ product: updatedProduct._id, bidder: req.user._id, amount: numericAmount }],
+          { session }
+        );
+
+        populatedBid = await Bid.findById(bid._id).populate("bidder", "name").session(session);
+      });
+    } catch (err) {
+      if (!isConflict) throw err;
+    } finally {
+      await session.endSession();
+    }
+
+    if (isConflict) {
       return res.status(409).json({
         message: "다른 입찰이 먼저 처리되었습니다. 현재가를 확인하고 다시 입찰해주세요.",
       });
     }
-
-    const bid = await Bid.create({
-      product: updatedProduct._id,
-      bidder: req.user._id,
-      amount: numericAmount,
-    });
-
-    const populatedBid = await Bid.findById(bid._id).populate("bidder", "name");
 
     const io = req.app.get("io");
 
