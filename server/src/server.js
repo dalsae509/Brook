@@ -50,8 +50,6 @@ io.use((socket, next) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("socket connected:", socket.id);
-
   socket.on("user:join", () => {
     if (socket.data.userId) {
       socket.join(`user:${socket.data.userId}`);
@@ -60,12 +58,10 @@ io.on("connection", (socket) => {
 
   socket.on("auction:join", (productId) => {
     socket.join(getAuctionRoom(productId));
-    console.log(`socket ${socket.id} joined ${getAuctionRoom(productId)}`);
   });
 
   socket.on("auction:leave", (productId) => {
     socket.leave(getAuctionRoom(productId));
-    console.log(`socket ${socket.id} left ${getAuctionRoom(productId)}`);
   });
 
   socket.on("chat:join", (chatId) => {
@@ -74,10 +70,6 @@ io.on("connection", (socket) => {
 
   socket.on("chat:leave", (chatId) => {
     socket.leave(`chat:${chatId}`);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("socket disconnected:", socket.id);
   });
 });
 
