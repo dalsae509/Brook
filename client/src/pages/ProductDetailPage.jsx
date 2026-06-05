@@ -7,6 +7,7 @@ import socket from "../socket/socket";
 import ReviewSection from "../components/ReviewSection";
 import { getBidUnit } from "../utils/bidUnit";
 import { CATEGORIES } from "../utils/categories";
+import { getCloudinaryUrl } from "../utils/cloudinary";
 
 const FIXED_STATUS_LABELS = { available: "판매중", reserved: "예약중", sold: "판매완료" };
 const FIXED_STATUS_COLORS = {
@@ -419,7 +420,11 @@ function ProductDetailPage() {
             <div className="mb-6 space-y-2">
               <div className="h-80 bg-slate-100 rounded-xl overflow-hidden relative">
                 {total > 0 ? (
-                  <img src={images[idx]} alt={`${product.title} ${idx + 1}`} className="w-full h-full object-cover" />
+                  <img
+                    src={getCloudinaryUrl(images[idx], { width: 800 })}
+                    alt={`${product.title} ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-400">이미지 없음</div>
                 )}
@@ -458,7 +463,7 @@ function ProductDetailPage() {
                         i === idx ? "border-slate-800" : "border-transparent"
                       }`}
                     >
-                      <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-cover" />
+                      <img src={getCloudinaryUrl(url, { width: 120, height: 120 })} alt={`썸네일 ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>

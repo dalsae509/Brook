@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import axiosInstance from "../api/axios";
+import { getCloudinaryUrl } from "../utils/cloudinary";
 
 const AUCTION_STATUS_LABELS = { pending: "대기중", live: "진행중", ended: "종료됨" };
 const FIXED_STATUS_LABELS = { available: "판매중", reserved: "예약중", sold: "판매완료" };
@@ -285,7 +286,12 @@ function HomePage() {
               >
                 <div className="h-48 bg-slate-100 rounded-xl mb-4 overflow-hidden relative">
                   {product.images?.[0] ? (
-                    <img src={product.images?.[0]} alt={product.title} className="w-full h-full object-cover" />
+                    <img
+                      src={getCloudinaryUrl(product.images[0], { width: 400, height: 300 })}
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400">
                       이미지 없음
