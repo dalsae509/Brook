@@ -77,7 +77,7 @@ function MyPage() {
         {Array.from({ length: 2 }).map((_, i) => (
           <div key={i} className="space-y-4">
             <div className="h-7 bg-slate-200 rounded w-48" />
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {Array.from({ length: 2 }).map((_, j) => (
                 <div key={j} className="bg-white rounded-2xl shadow p-5 space-y-3">
                   <div className="h-5 bg-slate-200 rounded w-3/4" />
@@ -103,7 +103,7 @@ function MyPage() {
             등록한 상품이 없습니다.
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {myProducts.map((product) => (
               <div key={product._id} className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition relative">
                 <Link to={`/products/${product._id}`}>
@@ -180,7 +180,7 @@ function MyPage() {
             낙찰받은 상품이 없습니다.
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {myWins.map((product) => (
               <Link
                 key={product._id}
@@ -207,7 +207,7 @@ function MyPage() {
             즉시구매한 상품이 없습니다.
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {myPurchases.map((product) => (
               <Link
                 key={product._id}
@@ -282,7 +282,7 @@ function MyPage() {
             찜한 상품이 없습니다.
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {myWishlist.map((product) => (
               <Link
                 key={product._id}

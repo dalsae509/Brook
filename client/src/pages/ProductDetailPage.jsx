@@ -407,7 +407,7 @@ function ProductDetailPage() {
   const isFixed = product.saleType === "fixed";
 
   return (
-    <div className="grid lg:grid-cols-3 gap-8">
+    <div className="grid lg:grid-cols-3 gap-8 pb-24 lg:pb-0">
       {/* 상품 정보 */}
       <div className="lg:col-span-2 space-y-6">
       <div className="bg-white rounded-2xl shadow p-6">
@@ -689,8 +689,8 @@ function ProductDetailPage() {
       <ReviewSection productId={id} product={product} user={user} />
       </div>
 
-      {/* 액션 패널 */}
-      <div className="space-y-6">
+      {/* 액션 패널 (데스크탑) */}
+      <div className="hidden lg:block space-y-6">
         <div className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-4">
             {isFixed ? "구매하기" : "경매 참여"}
@@ -925,6 +925,102 @@ function ProductDetailPage() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 모바일 하단 고정 액션 바 */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-40 px-4 py-3">
+        {!user ? (
+          <Link to="/login" className="block w-full text-center bg-slate-800 text-white py-3 rounded-xl font-medium">
+            로그인하고 참여하기
+          </Link>
+        ) : isFixed ? (
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-400">판매가</p>
+              <p className="font-bold text-slate-800">{product.fixedPrice?.toLocaleString()}원</p>
+            </div>
+            {!isSeller && product.fixedStatus === "available" && (
+              <button onClick={handlePurchase} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700">
+                구매하기
+              </button>
+            )}
+            {isBuyer && product.fixedStatus === "reserved" && (
+              <button onClick={() => navigate("/chats")} className="bg-slate-800 text-white px-6 py-3 rounded-xl font-medium">
+                채팅방으로 이동
+              </button>
+            )}
+            {isSeller && product.fixedStatus === "reserved" && (
+              <button onClick={handleConfirmTrade} className="bg-green-600 text-white px-6 py-3 rounded-xl font-medium">
+                거래 완료
+              </button>
+            )}
+            {product.fixedStatus === "sold" && (
+              <p className="text-slate-400 font-medium">판매 완료</p>
+            )}
+          </div>
+        ) : (
+          <div>
+            {!isSeller && product.auctionStatus === "live" && (
+              <div className="flex gap-2 items-center">
+                <div className="shrink-0">
+                  <p className="text-xs text-slate-400">현재가</p>
+                  <p className="font-bold text-slate-800 text-sm">{product.currentPrice?.toLocaleString()}원</p>
+                </div>
+                <input
+                  type="number"
+                  value={bidAmount}
+                  onChange={(e) => setBidAmount(e.target.value)}
+                  placeholder={minBidAmount != null ? `최소 ${minBidAmount.toLocaleString()}원` : "입찰 금액"}
+                  className="flex-1 border rounded-xl px-3 py-2.5 text-sm min-w-0"
+                />
+                <button onClick={handleBid} className="bg-purple-600 text-white px-4 py-2.5 rounded-xl font-medium text-sm shrink-0 hover:bg-purple-700">
+                  입찰
+                </button>
+              </div>
+            )}
+            {isSeller && product.auctionStatus === "live" && (
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-xs text-slate-400">현재가</p>
+                  <p className="font-bold text-slate-800">{product.currentPrice?.toLocaleString()}원</p>
+                </div>
+                <button onClick={handleEndAuction} className="bg-red-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-red-700">
+                  경매 종료
+                </button>
+              </div>
+            )}
+            {isSeller && product.auctionStatus === "pending" && (
+              <button onClick={handleStartAuction} className="w-full bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700">
+                경매 시작 ({durationMinutes}분) — 위에서 시간 변경 가능
+              </button>
+            )}
+            {isWinner && product.auctionStatus === "ended" && (
+              <button onClick={handleOpenChat} className="w-full bg-slate-800 text-white py-3 rounded-xl font-medium hover:bg-slate-700">
+                채팅방으로 이동
+              </button>
+            )}
+            {isSeller && product.auctionStatus === "ended" && product.winner && !product.auctionTradeConfirmed && (
+              <div className="flex gap-2">
+                <button onClick={handleSellerGoToChat} className="flex-1 bg-slate-800 text-white py-3 rounded-xl font-medium text-sm">
+                  낙찰자와 채팅
+                </button>
+                <button onClick={handleConfirmAuctionTrade} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium text-sm">
+                  거래 완료
+                </button>
+              </div>
+            )}
+            {product.auctionStatus === "ended" && !isWinner && !isSeller && (
+              <p className="text-center text-slate-400 text-sm py-2">종료된 경매입니다.</p>
+            )}
+            {product.auctionStatus === "pending" && !isSeller && (
+              <p className="text-center text-slate-400 text-sm py-2">
+                {product.scheduledStartTime
+                  ? `경매 시작 예정: ${new Date(product.scheduledStartTime).toLocaleString("ko-KR")}`
+                  : "판매자가 아직 경매를 시작하지 않았습니다."}
+              </p>
             )}
           </div>
         )}

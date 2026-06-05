@@ -277,14 +277,14 @@ function HomePage() {
         </div>
       ) : (
         <>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {products.map((product) => (
               <Link
                 key={product._id}
                 to={`/products/${product._id}`}
-                className="bg-white rounded-2xl shadow p-5 hover:shadow-lg transition"
+                className="bg-white rounded-2xl shadow p-3 sm:p-5 hover:shadow-lg transition"
               >
-                <div className="h-48 bg-slate-100 rounded-xl mb-4 overflow-hidden relative">
+                <div className="h-32 sm:h-48 bg-slate-100 rounded-xl mb-3 sm:mb-4 overflow-hidden relative">
                   {product.images?.[0] ? (
                     <img
                       src={getCloudinaryUrl(product.images[0], { width: 400, height: 300 })}
@@ -293,11 +293,11 @@ function HomePage() {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
                       이미지 없음
                     </div>
                   )}
-                  <span className={`absolute top-2 left-2 text-xs font-semibold px-2 py-1 rounded-full ${
+                  <span className={`absolute top-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full ${
                     product.saleType === "fixed"
                       ? "bg-blue-500 text-white"
                       : "bg-purple-500 text-white"
@@ -306,21 +306,20 @@ function HomePage() {
                   </span>
                 </div>
 
-                <h2 className="text-lg font-semibold mb-1 truncate">{product.title}</h2>
-                <p className="text-slate-500 text-sm mb-2">{product.category}</p>
-                <p className="text-slate-800 font-medium mb-2">
+                <h2 className="text-sm sm:text-lg font-semibold mb-1 truncate">{product.title}</h2>
+                <p className="text-slate-500 text-xs sm:text-sm mb-1 truncate">{product.category}</p>
+                <p className="text-slate-800 font-medium text-sm sm:text-base mb-1">
                   {displayPrice(product)?.toLocaleString()}원
                 </p>
-                <p className="text-xs text-slate-400 mb-2">조회 {product.views?.toLocaleString() ?? 0}회</p>
 
                 {product.saleType === "fixed" ? (
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     FIXED_STATUS_COLORS[product.fixedStatus] ?? ""
                   }`}>
                     {FIXED_STATUS_LABELS[product.fixedStatus]}
                   </span>
                 ) : (
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     AUCTION_STATUS_COLORS[product.auctionStatus] ?? ""
                   }`}>
                     {AUCTION_STATUS_LABELS[product.auctionStatus]}

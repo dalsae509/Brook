@@ -76,7 +76,7 @@ function SellerProfilePage() {
         {activeProducts.length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-6 text-slate-500">판매 중인 상품이 없습니다.</div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {activeProducts.map((product) => (
               <Link
                 key={product._id}
@@ -147,7 +147,7 @@ function SellerProfilePage() {
       {closedProducts.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold mb-3 text-slate-500">거래 완료 ({closedProducts.length})</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {closedProducts.map((product) => (
               <Link
                 key={product._id}
