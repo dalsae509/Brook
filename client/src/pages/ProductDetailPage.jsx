@@ -366,13 +366,24 @@ function ProductDetailPage() {
     }
   };
 
-  // 낙찰자 채팅 시작
+  // 낙찰자 채팅 시작 (winner용 — POST /api/chats가 기존 채팅방을 반환)
   const handleOpenChat = async () => {
     try {
       const res = await axiosInstance.post("/api/chats", { productId: id });
       navigate(`/chats/${res.data.chat._id}`);
     } catch (error) {
       toast.error(error.response?.data?.message || "채팅 시작 실패");
+    }
+  };
+
+  // 판매자용 — 이 상품의 채팅방을 채팅 목록에서 찾아 이동
+  const handleSellerGoToChat = async () => {
+    try {
+      const res = await axiosInstance.get("/api/chats");
+      const chat = res.data.chats.find((c) => c.product?._id === id);
+      navigate(chat ? `/chats/${chat._id}` : "/chats");
+    } catch {
+      navigate("/chats");
     }
   };
 
@@ -861,12 +872,20 @@ function ProductDetailPage() {
                 product.auctionTradeConfirmed ? (
                   <p className="text-center text-green-600 font-medium">거래 완료됨</p>
                 ) : (
-                  <button
-                    onClick={handleConfirmAuctionTrade}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700"
-                  >
-                    거래 완료
-                  </button>
+                  <>
+                    <button
+                      onClick={handleSellerGoToChat}
+                      className="w-full bg-slate-800 text-white py-3 rounded-lg hover:bg-slate-700"
+                    >
+                      낙찰자와 채팅하기
+                    </button>
+                    <button
+                      onClick={handleConfirmAuctionTrade}
+                      className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700"
+                    >
+                      거래 완료
+                    </button>
+                  </>
                 )
               )}
               {!isSeller && product.auctionStatus === "pending" && (

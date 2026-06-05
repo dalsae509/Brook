@@ -9,6 +9,7 @@ const TYPE_LABELS = {
   outbid: "입찰 초과",
   wishlist_auction_started: "찜 경매 시작",
   trade_confirmed: "거래 완료",
+  chat_created: "채팅방 생성",
 };
 
 const TYPE_COLORS = {
@@ -17,6 +18,7 @@ const TYPE_COLORS = {
   outbid: "text-orange-500",
   wishlist_auction_started: "text-purple-600",
   trade_confirmed: "text-green-600",
+  chat_created: "text-blue-600",
 };
 
 function NotificationBell() {
@@ -54,7 +56,11 @@ function NotificationBell() {
       markOneRead(n._id);
     }
     setOpen(false);
-    if (n.product) navigate(`/products/${n.product}`);
+    if (n.type === "chat_created") {
+      navigate("/chats");
+    } else if (n.product) {
+      navigate(`/products/${n.product}`);
+    }
   };
 
   const handleDeleteOne = async (e, id) => {
