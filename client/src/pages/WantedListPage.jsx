@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axiosInstance from "../api/axios";
 import useAuthStore from "../store/authStore";
 import { CATEGORIES } from "../utils/categories";
 
 function WantedListPage() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const category = searchParams.get("category") || "";
@@ -41,6 +42,26 @@ function WantedListPage() {
 
   return (
     <div className="space-y-6">
+      {/* 상단 탭 — 홈과 동일한 구조 */}
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { label: "전체", path: "/?tab=all" },
+          { label: "즉시 판매", path: "/?tab=fixed" },
+          { label: "경매", path: "/?tab=auction" },
+        ].map((tab) => (
+          <button
+            key={tab.label}
+            onClick={() => navigate(tab.path)}
+            className="px-5 py-2 rounded-full font-medium transition bg-white text-slate-600 border hover:border-slate-400"
+          >
+            {tab.label}
+          </button>
+        ))}
+        <button className="px-5 py-2 rounded-full font-medium transition bg-slate-800 text-white">
+          삽니다
+        </button>
+      </div>
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl sm:text-3xl font-bold">삽니다</h1>
         {user && (

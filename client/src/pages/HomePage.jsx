@@ -149,7 +149,7 @@ function HomePage() {
       <h1 className="text-2xl sm:text-3xl font-bold">상품 목록</h1>
 
       {/* 탭 */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {[
           { key: "all", label: "전체" },
           { key: "fixed", label: "즉시 판매" },
@@ -167,6 +167,12 @@ function HomePage() {
             {tab.label}
           </button>
         ))}
+        <Link
+          to="/wanted"
+          className="px-5 py-2 rounded-full font-medium transition bg-white text-orange-600 border border-orange-200 hover:border-orange-400"
+        >
+          삽니다
+        </Link>
       </div>
 
       {/* 필터 */}
