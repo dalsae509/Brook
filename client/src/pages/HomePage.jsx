@@ -169,7 +169,7 @@ function HomePage() {
         ))}
         <Link
           to="/wanted"
-          className="px-5 py-2 rounded-full font-medium transition bg-white text-orange-600 border border-orange-200 hover:border-orange-400"
+          className="px-5 py-2 rounded-full font-medium transition bg-white text-slate-600 border hover:border-slate-400"
         >
           삽니다
         </Link>
