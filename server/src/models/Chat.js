@@ -5,7 +5,12 @@ const chatSchema = new mongoose.Schema(
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true,
+      default: null,
+    },
+    wantedPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "WantedPost",
+      default: null,
     },
     buyer: {
       type: mongoose.Schema.Types.ObjectId,

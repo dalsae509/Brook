@@ -76,7 +76,9 @@ function ChatListPage() {
                       </p>
                     )}
                   </div>
-                  <p className="text-sm text-slate-500 truncate">{chat.product?.title}</p>
+                  <p className="text-sm text-slate-500 truncate">
+                    {chat.product?.title ?? chat.wantedPost?.title ?? ""}
+                  </p>
                   {chat.lastMessage && (
                     <p className="text-sm text-slate-400 truncate">{chat.lastMessage.content}</p>
                   )}

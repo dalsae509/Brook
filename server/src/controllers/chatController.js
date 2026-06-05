@@ -79,6 +79,7 @@ export const getMyChats = async (req, res) => {
       isActive: true,
     })
       .populate("product", "title images saleType")
+      .populate("wantedPost", "title")
       .populate("buyer", "name")
       .populate("seller", "name")
       .populate("lastMessage", "content createdAt")

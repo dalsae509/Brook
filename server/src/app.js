@@ -10,6 +10,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import wantedRoutes from "./routes/wantedRoutes.js";
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use("/api/chats", apiLimiter, chatRoutes);
 app.use("/api/notifications", apiLimiter, notificationRoutes);
 app.use("/api/reviews", apiLimiter, reviewRoutes);
 app.use("/api/admin", apiLimiter, adminRoutes);
+app.use("/api/wanted", apiLimiter, wantedRoutes);
 
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err.message);

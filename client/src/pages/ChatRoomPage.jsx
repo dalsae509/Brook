@@ -117,7 +117,9 @@ function ChatRoomPage() {
 
         <div className="flex-1 min-w-0">
           <p className="font-semibold leading-tight">{other.name}</p>
-          <p className="text-xs text-slate-400 truncate">{chat.product?.title}</p>
+          <p className="text-xs text-slate-400 truncate">
+            {chat.product?.title ?? chat.wantedPost?.title ?? ""}
+          </p>
         </div>
 
         {isActive && (

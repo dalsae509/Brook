@@ -14,6 +14,9 @@ import SellerProfilePage from "./pages/SellerProfilePage";
 import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFoundPage from "./pages/NotFoundPage";
+import WantedListPage from "./pages/WantedListPage";
+import WantedDetailPage from "./pages/WantedDetailPage";
+import CreateWantedPage from "./pages/CreateWantedPage";
 import useAuthStore from "./store/authStore";
 import useNotificationStore from "./store/notificationStore";
 import socket from "./socket/socket";
@@ -71,12 +74,22 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/users/:userId" element={<SellerProfilePage />} />
+          <Route path="/wanted" element={<WantedListPage />} />
+          <Route path="/wanted/:id" element={<WantedDetailPage />} />
 
           <Route
             path="/products/new"
             element={
               <ProtectedRoute>
                 <CreateProductPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wanted/new"
+            element={
+              <ProtectedRoute>
+                <CreateWantedPage />
               </ProtectedRoute>
             }
           />

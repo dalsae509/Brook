@@ -37,6 +37,9 @@ function Header() {
           <Link to="/" className="text-slate-700 hover:text-slate-900">
             홈
           </Link>
+          <Link to="/wanted" className="text-slate-700 hover:text-slate-900">
+            삽니다
+          </Link>
 
           {user && (
             <>
@@ -108,6 +111,9 @@ function Header() {
         <div className="md:hidden border-t bg-white px-4 py-3 space-y-1">
           <Link to="/" onClick={closeMenu} className="block py-2 text-slate-700 hover:text-slate-900">
             홈
+          </Link>
+          <Link to="/wanted" onClick={closeMenu} className="block py-2 text-slate-700 hover:text-slate-900">
+            삽니다
           </Link>
 
           {user && (
