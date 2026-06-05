@@ -861,7 +861,7 @@ function ProductDetailPage() {
                     onClick={handleOpenChat}
                     className="w-full bg-slate-800 text-white py-3 rounded-lg hover:bg-slate-700"
                   >
-                    판매자에게 연락하기
+                    채팅방으로 이동
                   </button>
                   {product.auctionTradeConfirmed && (
                     <p className="text-center text-green-600 font-medium text-sm">거래가 완료되었습니다.</p>

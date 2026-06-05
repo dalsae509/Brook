@@ -64,4 +64,9 @@ app.use("/api/notifications", apiLimiter, notificationRoutes);
 app.use("/api/reviews", apiLimiter, reviewRoutes);
 app.use("/api/admin", apiLimiter, adminRoutes);
 
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err.message);
+  res.status(err.status ?? 500).json({ message: err.message || "서버 오류가 발생했습니다." });
+});
+
 export default app;

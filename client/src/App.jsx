@@ -13,6 +13,7 @@ import ChatRoomPage from "./pages/ChatRoomPage";
 import SellerProfilePage from "./pages/SellerProfilePage";
 import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import NotFoundPage from "./pages/NotFoundPage";
 import useAuthStore from "./store/authStore";
 import useNotificationStore from "./store/notificationStore";
 import socket from "./socket/socket";
@@ -115,6 +116,7 @@ function App() {
               </AdminRoute>
             }
           />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
