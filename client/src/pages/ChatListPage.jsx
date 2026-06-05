@@ -62,6 +62,8 @@ function ChatListPage() {
                 <div className="w-14 h-14 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0">
                   {chat.product?.images?.[0] ? (
                     <img src={getCloudinaryUrl(chat.product.images[0], { width: 80, height: 80 })} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : chat.wantedPost ? (
+                    <div className="w-full h-full flex items-center justify-center bg-orange-50 text-2xl">🛒</div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">없음</div>
                   )}

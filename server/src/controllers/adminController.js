@@ -1,5 +1,7 @@
 import User from "../models/User.js";
 import Product from "../models/Product.js";
+import WantedPost from "../models/WantedPost.js";
+import WantedComment from "../models/WantedComment.js";
 import { finalizeAuction } from "../utils/auctionScheduler.js";
 
 export const getUsers = async (req, res) => {
@@ -72,6 +74,37 @@ export const forceDeleteProduct = async (req, res) => {
     return res.status(200).json({ message: "상품 강제 삭제 완료" });
   } catch (error) {
     console.error("admin forceDeleteProduct error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+export const getAdminWantedPosts = async (req, res) => {
+  try {
+    const { page: pageParam = "1", search = "" } = req.query;
+    const page = Math.max(1, parseInt(pageParam) || 1);
+    const limit = 20;
+    const filter = {};
+    if (search.trim()) {
+      const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      filter.title = { $regex: escaped, $options: "i" };
+    }
+    const [posts, total] = await Promise.all([
+      WantedPost.find(filter).populate("author", "name email").sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      WantedPost.countDocuments(filter),
+    ]);
+    return res.status(200).json({ posts, total, totalPages: Math.ceil(total / limit) });
+  } catch (error) {
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+export const forceDeleteWantedPost = async (req, res) => {
+  try {
+    const post = await WantedPost.findByIdAndDelete(req.params.postId);
+    if (!post) return res.status(404).json({ message: "게시글을 찾을 수 없습니다." });
+    await WantedComment.deleteMany({ wantedPost: req.params.postId });
+    return res.status(200).json({ message: "삭제 완료" });
+  } catch (error) {
     return res.status(500).json({ message: "서버 오류" });
   }
 };

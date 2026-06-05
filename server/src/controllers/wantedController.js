@@ -14,12 +14,29 @@ export const getMyPosts = async (req, res) => {
   }
 };
 
+export const getMyCommentedPosts = async (req, res) => {
+  try {
+    const postIds = await WantedComment.distinct("wantedPost", { author: req.user._id });
+    const posts = await WantedPost.find({ _id: { $in: postIds } })
+      .sort({ createdAt: -1 });
+    res.json({ posts });
+  } catch (error) {
+    console.error("getMyCommentedPosts error:", error.message);
+    res.status(500).json({ message: "서버 오류" });
+  }
+};
+
 export const getPosts = async (req, res) => {
   try {
-    const { page = 1, category, status = "open" } = req.query;
+    const { page = 1, category, status = "open", search = "" } = req.query;
     const limit = 12;
-    const query = { status };
+    const query = {};
+    if (status !== "all") query.status = status;
     if (category) query.category = category;
+    if (search.trim()) {
+      const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query.title = { $regex: escaped, $options: "i" };
+    }
 
     const [posts, total] = await Promise.all([
       WantedPost.find(query)
@@ -82,6 +99,28 @@ export const closePost = async (req, res) => {
     res.json({ message: "거래 완료 처리됨", post });
   } catch (error) {
     console.error("closePost error:", error.message);
+    res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+export const updatePost = async (req, res) => {
+  try {
+    const post = await WantedPost.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "게시글을 찾을 수 없습니다." });
+    if (post.author.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "권한이 없습니다." });
+    if (post.status !== "open")
+      return res.status(400).json({ message: "마감된 게시글은 수정할 수 없습니다." });
+
+    const { title, description, category, targetPrice } = req.body;
+    if (title) post.title = title;
+    if (description) post.description = description;
+    if (category) post.category = category;
+    post.targetPrice = targetPrice != null ? Number(targetPrice) : null;
+    await post.save();
+    res.json({ message: "수정 완료", post });
+  } catch (error) {
+    console.error("updatePost error:", error.message);
     res.status(500).json({ message: "서버 오류" });
   }
 };

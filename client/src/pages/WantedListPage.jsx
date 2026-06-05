@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axiosInstance from "../api/axios";
 import useAuthStore from "../store/authStore";
@@ -10,16 +10,21 @@ function WantedListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const category = searchParams.get("category") || "";
+  const status = searchParams.get("status") || "open";
+  const search = searchParams.get("search") || "";
 
+  const [searchInput, setSearchInput] = useState(search);
   const [posts, setPosts] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const searchDebounceRef = useRef(null);
 
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({ page, status: "open" });
+      const params = new URLSearchParams({ page, status });
       if (category) params.append("category", category);
+      if (search) params.append("search", search);
       const res = await axiosInstance.get(`/api/wanted?${params}`);
       setPosts(res.data.posts || []);
       setTotalPages(res.data.totalPages || 1);
@@ -28,7 +33,7 @@ function WantedListPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, category]);
+  }, [page, category, status, search]);
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
@@ -38,6 +43,15 @@ function WantedListPage() {
       Object.entries(updates).forEach(([k, v]) => v ? next.set(k, v) : next.delete(k));
       return next;
     }, { replace: true });
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      updateParams({ search: value, page: "" });
+    }, 400);
   };
 
   return (
@@ -65,13 +79,39 @@ function WantedListPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl sm:text-3xl font-bold">삽니다</h1>
         {user && (
-          <Link
-            to="/wanted/new"
-            className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-700"
-          >
+          <Link to="/wanted/new" className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-700">
             + 글쓰기
           </Link>
         )}
+      </div>
+
+      {/* 검색 + 상태 필터 */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={handleSearchChange}
+          placeholder="제목 검색"
+          className="flex-1 border rounded-lg px-4 py-2.5 text-sm"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => updateParams({ status: "open", page: "" })}
+            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium border transition ${
+              status === "open" ? "bg-slate-800 text-white border-slate-800" : "text-slate-600 hover:border-slate-400"
+            }`}
+          >
+            진행 중
+          </button>
+          <button
+            onClick={() => updateParams({ status: "all", page: "" })}
+            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium border transition ${
+              status === "all" ? "bg-slate-800 text-white border-slate-800" : "text-slate-600 hover:border-slate-400"
+            }`}
+          >
+            전체 보기
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow p-4 flex gap-3 overflow-x-auto">
@@ -123,8 +163,10 @@ function WantedListPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded-full shrink-0">
-                      삽니다
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                      post.status === "open" ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500"
+                    }`}>
+                      {post.status === "open" ? "구매중" : "거래완료"}
                     </span>
                     <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
                       {post.category}

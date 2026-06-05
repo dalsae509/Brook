@@ -21,6 +21,14 @@ function AdminPage() {
   const [productTotalPages, setProductTotalPages] = useState(1);
   const [productSearch, setProductSearch] = useState("");
   const [productsLoading, setProductsLoading] = useState(true);
+
+  const [wantedPosts, setWantedPosts] = useState([]);
+  const [wantedTotal, setWantedTotal] = useState(0);
+  const [wantedPage, setWantedPage] = useState(1);
+  const [wantedTotalPages, setWantedTotalPages] = useState(1);
+  const [wantedSearch, setWantedSearch] = useState("");
+  const [wantedLoading, setWantedLoading] = useState(true);
+
   const searchDebounceRef = useRef(null);
 
   const fetchUsers = useCallback(async () => {
@@ -51,14 +59,42 @@ function AdminPage() {
     }
   }, [productPage, productSearch]);
 
+  const fetchWantedPosts = useCallback(async () => {
+    try {
+      setWantedLoading(true);
+      const res = await axiosInstance.get("/api/admin/wanted", {
+        params: { page: wantedPage, search: wantedSearch },
+      });
+      setWantedPosts(res.data.posts || []);
+      setWantedTotal(res.data.total || 0);
+      setWantedTotalPages(res.data.totalPages || 1);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "삽니다 목록 불러오기 실패");
+    } finally {
+      setWantedLoading(false);
+    }
+  }, [wantedPage, wantedSearch]);
+
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  useEffect(() => { fetchWantedPosts(); }, [fetchWantedPosts]);
 
   const handleDeleteUser = async (userId, userName) => {
     if (!window.confirm(`"${userName}" 사용자를 삭제하시겠습니까?`)) return;
     try {
       await axiosInstance.delete(`/api/admin/users/${userId}`);
       setUsers((prev) => prev.filter((u) => u._id !== userId));
+    } catch (error) {
+      toast.error(error.response?.data?.message || "삭제 실패");
+    }
+  };
+
+  const handleForceDeleteWanted = async (postId, title) => {
+    if (!window.confirm(`"${title}" 게시글을 강제 삭제하시겠습니까?`)) return;
+    try {
+      await axiosInstance.delete(`/api/admin/wanted/${postId}`);
+      setWantedPosts((prev) => prev.filter((p) => p._id !== postId));
+      setWantedTotal((prev) => prev - 1);
     } catch (error) {
       toast.error(error.response?.data?.message || "삭제 실패");
     }
@@ -104,10 +140,11 @@ function AdminPage() {
       <h1 className="text-2xl sm:text-3xl font-bold">관리자 대시보드</h1>
 
       {/* 탭 */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {[
           { key: "users", label: `사용자 관리 (${users.length})` },
           { key: "products", label: `상품 관리 (${productTotal})` },
+          { key: "wanted", label: `삽니다 관리 (${wantedTotal})` },
         ].map((t) => (
           <button
             key={t.key}
@@ -262,6 +299,78 @@ function AdminPage() {
               >
                 다음
               </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 삽니다 관리 */}
+      {tab === "wanted" && (
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="제목 검색"
+            onChange={(e) => {
+              clearTimeout(searchDebounceRef.current);
+              searchDebounceRef.current = setTimeout(() => {
+                setWantedPage(1);
+                setWantedSearch(e.target.value);
+              }, 400);
+            }}
+            className="border rounded-lg px-4 py-2 w-64"
+          />
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {wantedLoading ? (
+              <div className="p-6 text-slate-500">불러오는 중...</div>
+            ) : (
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-slate-600">
+                  <tr>
+                    <th className="text-left px-5 py-3">제목</th>
+                    <th className="text-left px-5 py-3">작성자</th>
+                    <th className="text-left px-5 py-3">카테고리</th>
+                    <th className="text-left px-5 py-3">상태</th>
+                    <th className="text-left px-5 py-3">등록일</th>
+                    <th className="px-5 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {wantedPosts.map((p) => (
+                    <tr key={p._id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 font-medium max-w-[180px] truncate">
+                        <a href={`/wanted/${p._id}`} className="hover:underline text-blue-600">{p.title}</a>
+                      </td>
+                      <td className="px-5 py-3 text-slate-500">{p.author?.name}</td>
+                      <td className="px-5 py-3 text-slate-500">{p.category}</td>
+                      <td className="px-5 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          p.status === "open" ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500"
+                        }`}>
+                          {p.status === "open" ? "구매중" : "거래완료"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-slate-500">{new Date(p.createdAt).toLocaleDateString()}</td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          onClick={() => handleForceDeleteWanted(p._id, p.title)}
+                          className="text-red-500 hover:text-red-700 text-xs border border-red-200 hover:border-red-400 px-3 py-1 rounded-lg"
+                        >
+                          삭제
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+            )}
+          </div>
+          {wantedTotalPages > 1 && (
+            <div className="flex justify-center items-center gap-4">
+              <button onClick={() => setWantedPage((p) => Math.max(1, p - 1))} disabled={wantedPage === 1} className="px-4 py-2 rounded-lg border hover:border-slate-400 disabled:opacity-40">이전</button>
+              <span className="text-slate-600">{wantedPage} / {wantedTotalPages}</span>
+              <button onClick={() => setWantedPage((p) => Math.min(wantedTotalPages, p + 1))} disabled={wantedPage === wantedTotalPages} className="px-4 py-2 rounded-lg border hover:border-slate-400 disabled:opacity-40">다음</button>
             </div>
           )}
         </div>
