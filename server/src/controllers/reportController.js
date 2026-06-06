@@ -3,8 +3,7 @@ import Report from "../models/Report.js";
 import User from "../models/User.js";
 import { recalculateBrookScore } from "../utils/brookScoreUtil.js";
 import { createNotification } from "../utils/notificationService.js";
-
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+import { REPORT_DUPLICATE_WINDOW_MS } from "../config/constants.js";
 
 export const createReport = async (req, res) => {
   try {
@@ -29,7 +28,7 @@ export const createReport = async (req, res) => {
     const existing = await Report.findOne({
       reporter: req.user._id,
       reportedUser: reportedUserId,
-      createdAt: { $gte: new Date(Date.now() - SEVEN_DAYS_MS) },
+      createdAt: { $gte: new Date(Date.now() - REPORT_DUPLICATE_WINDOW_MS) },
     });
     if (existing) {
       return res.status(409).json({ message: "7일 내에 이미 신고한 사용자입니다." });

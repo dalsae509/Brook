@@ -12,6 +12,11 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import wantedRoutes from "./routes/wantedRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import {
+  RATE_LIMIT_WINDOW_MS,
+  RATE_LIMIT_API_MAX,
+  RATE_LIMIT_AUTH_MAX,
+} from "./config/constants.js";
 
 const app = express();
 
@@ -21,8 +26,8 @@ const rateLimitDisabled = process.env.RATE_LIMIT_DISABLED === "true";
 const skipRateLimit = () => !isProduction || rateLimitDisabled;
 
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_API_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipRateLimit,
@@ -30,8 +35,8 @@ const apiLimiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100, // brute-force 방어용 백스톱 (수동 테스트로는 걸리지 않음)
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_AUTH_MAX, // brute-force 방어용 백스톱 (수동 테스트로는 걸리지 않음)
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipRateLimit,

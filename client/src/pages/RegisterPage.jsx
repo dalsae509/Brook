@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axiosInstance from "../api/axios";
+import useAuthStore from "../store/authStore";
 
 function EyeIcon({ open }) {
   return open ? (
@@ -18,6 +19,7 @@ function EyeIcon({ open }) {
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -28,9 +30,10 @@ function RegisterPage() {
     e.preventDefault();
     try {
       setLoading(true);
-      await axiosInstance.post("/api/auth/register", form);
-      toast.success("회원가입 성공. 로그인 해주세요.");
-      navigate("/login");
+      const res = await axiosInstance.post("/api/auth/register", form);
+      setAuth({ user: res.data.user, token: res.data.token, refreshToken: res.data.refreshToken });
+      toast.success("회원가입 성공");
+      navigate("/");
     } catch (error) {
       toast.error(error.response?.data?.message || "회원가입 실패");
     } finally {

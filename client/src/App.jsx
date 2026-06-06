@@ -1,25 +1,27 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import MainLayout from "./layouts/MainLayout";
-import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import CreateProductPage from "./pages/CreateProductPage";
-import ProductDetailPage from "./pages/ProductDetailPage";
-import MyPage from "./pages/MyPage";
-import ChatListPage from "./pages/ChatListPage";
-import ChatRoomPage from "./pages/ChatRoomPage";
-import SellerProfilePage from "./pages/SellerProfilePage";
-import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-import NotFoundPage from "./pages/NotFoundPage";
-import WantedListPage from "./pages/WantedListPage";
-import WantedDetailPage from "./pages/WantedDetailPage";
-import CreateWantedPage from "./pages/CreateWantedPage";
 import useAuthStore from "./store/authStore";
 import useNotificationStore from "./store/notificationStore";
 import socket from "./socket/socket";
+
+// 라우트 단위 코드 스플리팅 — 초기 번들 크기 축소
+const HomePage = lazy(() => import("./pages/HomePage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+const CreateProductPage = lazy(() => import("./pages/CreateProductPage"));
+const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage"));
+const MyPage = lazy(() => import("./pages/MyPage"));
+const ChatListPage = lazy(() => import("./pages/ChatListPage"));
+const ChatRoomPage = lazy(() => import("./pages/ChatRoomPage"));
+const SellerProfilePage = lazy(() => import("./pages/SellerProfilePage"));
+const AdminPage = lazy(() => import("./pages/AdminPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const WantedListPage = lazy(() => import("./pages/WantedListPage"));
+const WantedDetailPage = lazy(() => import("./pages/WantedDetailPage"));
+const CreateWantedPage = lazy(() => import("./pages/CreateWantedPage"));
 
 function AdminRoute({ children }) {
   const { user } = useAuthStore();
@@ -67,6 +69,7 @@ function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+      <Suspense fallback={<div className="text-center py-20 text-slate-400">불러오는 중...</div>}>
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
@@ -132,6 +135,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

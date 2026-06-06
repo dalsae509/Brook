@@ -9,11 +9,21 @@ beforeEach(clearDB);
 
 const validUser = { name: "테스터", email: "tester@example.com", password: "password123" };
 
-test("회원가입: 성공 시 201과 사용자 정보 반환", async () => {
+test("회원가입: 성공 시 201과 토큰 + 사용자 정보 반환(자동 로그인)", async () => {
   const res = await request(app).post("/api/auth/register").send(validUser);
   assert.equal(res.status, 201);
   assert.equal(res.body.user.email, "tester@example.com");
   assert.equal(res.body.user.brookScore, 36.5);
+  assert.ok(res.body.token);
+  assert.ok(res.body.refreshToken);
+});
+
+test("회원가입: 이메일 대소문자/공백 정규화", async () => {
+  const res = await request(app)
+    .post("/api/auth/register")
+    .send({ ...validUser, email: "  TESTER@Example.COM  " });
+  assert.equal(res.status, 201);
+  assert.equal(res.body.user.email, "tester@example.com");
 });
 
 test("회원가입: 8자 미만 비밀번호는 400", async () => {

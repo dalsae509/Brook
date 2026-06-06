@@ -1,14 +1,14 @@
 import Product from "../models/Product.js";
 import { createNotification } from "./notificationService.js";
-
-// 예약/낙찰 후 이 기간이 지나도록 거래 완료 처리가 없으면 리마인더 발송
-const REMINDER_AFTER_MS = 3 * 24 * 60 * 60 * 1000; // 3일
-const SWEEP_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6시간마다 점검
+import {
+  TRADE_REMINDER_AFTER_MS,
+  TRADE_REMINDER_SWEEP_INTERVAL_MS,
+} from "../config/constants.js";
 
 // 거래 완료 처리를 잊은 거래에 리마인더 알림 발송
 export const sweepTradeReminders = async (io) => {
   try {
-    const threshold = new Date(Date.now() - REMINDER_AFTER_MS);
+    const threshold = new Date(Date.now() - TRADE_REMINDER_AFTER_MS);
 
     const pending = await Product.find({
       tradeReminderSentAt: null,
@@ -54,5 +54,5 @@ export const sweepTradeReminders = async (io) => {
 // 서버 시작 시 1회 실행 + 주기적 점검 등록
 export const startTradeReminderSweep = (io) => {
   sweepTradeReminders(io).catch(() => {});
-  setInterval(() => sweepTradeReminders(io).catch(() => {}), SWEEP_INTERVAL_MS);
+  setInterval(() => sweepTradeReminders(io).catch(() => {}), TRADE_REMINDER_SWEEP_INTERVAL_MS);
 };

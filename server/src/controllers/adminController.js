@@ -6,7 +6,7 @@ import { finalizeAuction } from "../utils/auctionScheduler.js";
 
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password -refreshToken").sort({ createdAt: -1 });
+    const users = await User.find().select("-password -refreshTokens").sort({ createdAt: -1 });
     return res.status(200).json({ users });
   } catch (error) {
     console.error("admin getUsers error:", error);

@@ -1,10 +1,29 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import {
+  ACCESS_TOKEN_TTL,
+  REFRESH_TOKEN_TTL,
+  MAX_REFRESH_TOKENS,
+  BCRYPT_SALT_ROUNDS,
+} from "../config/constants.js";
+
+const signAccessToken = (user) =>
+  jwt.sign(
+    { id: user._id, email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL }
+  );
+
+const signRefreshToken = (user) =>
+  jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TOKEN_TTL,
+  });
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -35,7 +54,7 @@ export const register = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
     const user = await User.create({
       name,
@@ -43,8 +62,16 @@ export const register = async (req, res) => {
       password: hashedPassword,
     });
 
+    // 회원가입 직후 바로 로그인되도록 토큰 발급
+    const token = signAccessToken(user);
+    const refreshToken = signRefreshToken(user);
+    user.refreshTokens = [refreshToken];
+    await user.save();
+
     return res.status(201).json({
       message: "회원가입 성공",
+      token,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -66,7 +93,8 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
 
     if (!email || !password) {
       return res.status(400).json({
@@ -90,19 +118,11 @@ export const login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    const token = signAccessToken(user);
+    const refreshToken = signRefreshToken(user);
 
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    user.refreshToken = refreshToken;
+    // 멀티 디바이스: 토큰을 추가하되 최대 개수 초과 시 오래된 것부터 제거
+    user.refreshTokens = [...user.refreshTokens, refreshToken].slice(-MAX_REFRESH_TOKENS);
     await user.save();
 
     return res.status(200).json({
@@ -145,23 +165,17 @@ export const refresh = async (req, res) => {
 
     const user = await User.findById(decoded.id);
 
-    if (!user || user.refreshToken !== refreshToken) {
+    if (!user || !user.refreshTokens.includes(refreshToken)) {
       return res.status(401).json({ message: "유효하지 않은 리프레시 토큰입니다." });
     }
 
-    const newToken = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    const newToken = signAccessToken(user);
+    const newRefreshToken = signRefreshToken(user);
 
-    const newRefreshToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    user.refreshToken = newRefreshToken;
+    // 사용한 토큰만 교체(로테이션), 다른 기기의 토큰은 유지
+    user.refreshTokens = user.refreshTokens
+      .filter((t) => t !== refreshToken)
+      .concat(newRefreshToken);
     await user.save();
 
     return res.status(200).json({ token: newToken, refreshToken: newRefreshToken });
@@ -177,8 +191,8 @@ export const logout = async (req, res) => {
 
     if (refreshToken) {
       await User.findOneAndUpdate(
-        { refreshToken },
-        { $set: { refreshToken: null } }
+        { refreshTokens: refreshToken },
+        { $pull: { refreshTokens: refreshToken } }
       );
     }
 

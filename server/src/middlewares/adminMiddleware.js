@@ -9,7 +9,7 @@ const adminMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(authHeader.split(" ")[1], process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password -refreshToken");
+    const user = await User.findById(decoded.id).select("-password -refreshTokens");
 
     if (!user) {
       return res.status(401).json({ message: "유효하지 않은 사용자입니다." });
