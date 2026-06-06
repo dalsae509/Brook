@@ -131,7 +131,8 @@ export const getMyWishlist = async (req, res) => {
         select: "title category images saleType fixedPrice fixedStatus currentPrice auctionStatus",
       });
 
-    return res.status(200).json({ wishlist: user.wishlist });
+    // 삭제된 상품은 populate 시 null이 되므로 제거
+    return res.status(200).json({ wishlist: user.wishlist.filter(Boolean) });
   } catch (error) {
     console.error("getMyWishlist error:", error);
     return res.status(500).json({ message: "서버 오류" });
