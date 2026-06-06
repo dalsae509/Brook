@@ -9,6 +9,8 @@ import {
   getCategories,
   getPriceStats,
   getRecommendations,
+  getSearchSuggestions,
+  getPopularSearches,
 } from "../controllers/productController.js";
 import {
   purchaseProduct,
@@ -21,6 +23,8 @@ const router = express.Router();
 
 router.get("/categories", getCategories);
 router.get("/price-stats", getPriceStats);
+router.get("/suggestions", getSearchSuggestions);
+router.get("/popular-searches", getPopularSearches);
 router.get("/", getProducts);
 router.get("/:id", getProductDetail);
 router.get("/:id/recommendations", getRecommendations);

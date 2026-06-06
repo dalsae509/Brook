@@ -35,6 +35,10 @@ function HomePage() {
   const [minPriceInput, setMinPriceInput] = useState(filters.minPrice);
   const [maxPriceInput, setMaxPriceInput] = useState(filters.maxPrice);
 
+  const [suggestions, setSuggestions] = useState([]);
+  const [popularSearches, setPopularSearches] = useState([]);
+  const [showSuggest, setShowSuggest] = useState(false);
+
   const [filterOpen, setFilterOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -99,10 +103,35 @@ function HomePage() {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
+    setShowSuggest(true);
     clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => {
       updateParams({ search: value, page: "" });
-    }, 400);
+      if (value.trim()) {
+        axiosInstance
+          .get("/api/products/suggestions", { params: { q: value.trim() } })
+          .then((res) => setSuggestions(res.data.suggestions || []))
+          .catch(() => setSuggestions([]));
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
+  };
+
+  const handleSearchFocus = () => {
+    setShowSuggest(true);
+    if (popularSearches.length === 0) {
+      axiosInstance
+        .get("/api/products/popular-searches")
+        .then((res) => setPopularSearches(res.data.keywords || []))
+        .catch(() => {});
+    }
+  };
+
+  const applySearch = (value) => {
+    setSearchInput(value);
+    setShowSuggest(false);
+    updateParams({ search: value, page: "" });
   };
 
   const handlePriceChange = (field, value) => {
@@ -194,13 +223,48 @@ function HomePage() {
         </div>
         <div className={`${filterOpen ? "block" : "hidden"} sm:block space-y-4`}>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <input
-            type="text"
-            placeholder="상품명 검색"
-            value={searchInput}
-            onChange={handleSearchChange}
-            className="border rounded-lg px-4 py-3"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="상품명 검색"
+              value={searchInput}
+              onChange={handleSearchChange}
+              onFocus={handleSearchFocus}
+              onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+              className="w-full border rounded-lg px-4 py-3"
+            />
+            {showSuggest && (suggestions.length > 0 || (!searchInput.trim() && popularSearches.length > 0)) && (
+              <div className="absolute z-30 left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg overflow-hidden">
+                {searchInput.trim() ? (
+                  suggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onMouseDown={() => applySearch(s)}
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-slate-50 truncate"
+                    >
+                      🔍 {s}
+                    </button>
+                  ))
+                ) : (
+                  <>
+                    <p className="px-4 pt-2 pb-1 text-xs text-slate-400 font-medium">인기 검색어</p>
+                    {popularSearches.map((k, i) => (
+                      <button
+                        key={k.keyword}
+                        type="button"
+                        onMouseDown={() => applySearch(k.keyword)}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-slate-50"
+                      >
+                        <span className="text-purple-500 font-semibold w-4">{i + 1}</span>
+                        <span className="truncate">{k.keyword}</span>
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
 
           <select
             name="category"

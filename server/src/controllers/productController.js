@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Chat from "../models/Chat.js";
 import Bid from "../models/Bid.js";
 import ProxyBid from "../models/ProxyBid.js";
+import SearchKeyword from "../models/SearchKeyword.js";
 import { validateBidTiers, getBidUnit } from "../utils/bidUnit.js";
 import { CATEGORIES } from "../config/categories.js";
 
@@ -118,6 +119,22 @@ export const getProducts = async (req, res) => {
     if (search.trim()) {
       const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       filter.title = { $regex: escaped, $options: "i" };
+
+      // 새 검색(첫 페이지)일 때만 검색어 집계 → 인기 검색어
+      if (page === 1) {
+        const keyword = search.trim().toLowerCase();
+        if (keyword.length <= 50) {
+          try {
+            await SearchKeyword.findOneAndUpdate(
+              { keyword },
+              { $inc: { count: 1 } },
+              { upsert: true }
+            );
+          } catch {
+            // 집계 실패는 검색 결과에 영향 주지 않도록 무시
+          }
+        }
+      }
     }
 
     if (category.trim()) {
@@ -354,6 +371,47 @@ export const getCategories = (req, res) => {
     message: "카테고리 목록 조회 성공",
     categories: CATEGORIES,
   });
+};
+
+// 검색 자동완성 — 입력 접두/부분 일치 상품명 제안
+export const getSearchSuggestions = async (req, res) => {
+  try {
+    const q = req.query.q?.trim();
+    if (!q) return res.status(200).json({ suggestions: [] });
+
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const products = await Product.find({
+      title: { $regex: escaped, $options: "i" },
+      $or: [
+        { saleType: "fixed", fixedStatus: "available" },
+        { saleType: "auction", auctionStatus: { $in: ["pending", "live"] } },
+      ],
+    })
+      .select("title")
+      .limit(20)
+      .lean();
+
+    const suggestions = [...new Set(products.map((p) => p.title))].slice(0, 8);
+    return res.status(200).json({ suggestions });
+  } catch (error) {
+    console.error("getSearchSuggestions error:", error.message);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+// 인기 검색어 — 집계된 검색어 상위 N개
+export const getPopularSearches = async (req, res) => {
+  try {
+    const keywords = await SearchKeyword.find()
+      .sort({ count: -1 })
+      .limit(10)
+      .select("keyword count")
+      .lean();
+    return res.status(200).json({ keywords });
+  } catch (error) {
+    console.error("getPopularSearches error:", error.message);
+    return res.status(500).json({ message: "서버 오류" });
+  }
 };
 
 // 카테고리별 시세 분석 — 거래 완료된 상품의 최종가 기준 통계
