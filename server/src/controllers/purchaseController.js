@@ -78,7 +78,7 @@ export const confirmTrade = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    let product, chat;
+    let product;
     try {
       product = await Product.findOneAndUpdate(
         { _id: id, fixedStatus: "reserved" },
@@ -92,12 +92,6 @@ export const confirmTrade = async (req, res) => {
         return res.status(409).json({ message: "이미 처리된 상품입니다." });
       }
 
-      chat = await Chat.findOneAndUpdate(
-        { product: id, buyer: existing.buyer },
-        { isActive: false },
-        { new: true, session }
-      );
-
       await session.commitTransaction();
     } catch (txError) {
       await session.abortTransaction();
@@ -105,14 +99,6 @@ export const confirmTrade = async (req, res) => {
       return res.status(500).json({ message: "서버 오류" });
     } finally {
       session.endSession();
-    }
-
-    if (chat) {
-      const io = req.app.get("io");
-      io.to(`chat:${chat._id}`).emit("chat:closed", {
-        chatId: String(chat._id),
-        reason: "거래가 완료되었습니다.",
-      });
     }
 
     // 거래 완료 — 판매자 completedDeals 증가 + 브룩 지수 재계산
@@ -197,12 +183,6 @@ export const cancelPurchase = async (req, res) => {
         session.endSession();
         return res.status(409).json({ message: "이미 처리된 상품입니다." });
       }
-
-      await Chat.findOneAndUpdate(
-        { product: id, buyer: previousBuyer },
-        { isActive: false },
-        { session }
-      );
 
       await session.commitTransaction();
     } catch (txError) {

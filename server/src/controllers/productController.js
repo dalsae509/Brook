@@ -192,7 +192,7 @@ export const getProductDetail = async (req, res) => {
       { $inc: { views: 1 } },
       { new: true }
     )
-      .populate("seller", "name")
+      .populate("seller", "name brookScore completedDeals totalDeals")
       .populate("winner", "name");
 
     if (!product) {

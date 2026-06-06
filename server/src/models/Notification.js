@@ -7,7 +7,7 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       enum: [
         "auction_won", "auction_ended", "outbid", "wishlist_auction_started",
-        "chat_created", "wanted_comment", "wanted_chat_started",
+        "chat_created", "wanted_comment", "wanted_chat_started", "trade_confirmed", "report_processed",
       ],
       required: true,
     },

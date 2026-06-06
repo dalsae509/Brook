@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Chat from "../models/Chat.js";
 import Message from "../models/Message.js";
 import Product from "../models/Product.js";
@@ -76,7 +77,7 @@ export const getMyChats = async (req, res) => {
   try {
     const chats = await Chat.find({
       $or: [{ buyer: req.user._id }, { seller: req.user._id }],
-      isActive: true,
+      deletedBy: { $ne: req.user._id },
     })
       .populate("product", "title images saleType")
       .populate("wantedPost", "title")
@@ -151,12 +152,11 @@ export const getChatMessages = async (req, res) => {
   }
 };
 
-export const closeChat = async (req, res) => {
+export const deleteChat = async (req, res) => {
   try {
     const { chatId } = req.params;
 
     const chat = await Chat.findById(chatId);
-
     if (!chat) {
       return res.status(404).json({ message: "채팅방을 찾을 수 없습니다." });
     }
@@ -164,23 +164,14 @@ export const closeChat = async (req, res) => {
     const isParticipant =
       chat.buyer.toString() === req.user._id.toString() ||
       chat.seller.toString() === req.user._id.toString();
-
     if (!isParticipant) {
       return res.status(403).json({ message: "접근 권한이 없습니다." });
     }
 
-    chat.isActive = false;
-    await chat.save();
-
-    const io = req.app.get("io");
-    io.to(`chat:${chatId}`).emit("chat:closed", {
-      chatId,
-      reason: "상대방이 대화를 종료했습니다.",
-    });
-
-    return res.status(200).json({ message: "대화 종료 완료" });
+    await Chat.findByIdAndUpdate(chatId, { $addToSet: { deletedBy: req.user._id } });
+    return res.status(200).json({ message: "채팅방 나가기 완료" });
   } catch (error) {
-    console.error("closeChat error:", error);
+    console.error("deleteChat error:", error);
     return res.status(500).json({ message: "서버 오류" });
   }
 };
@@ -196,7 +187,7 @@ export const sendMessage = async (req, res) => {
 
     const chat = await Chat.findById(chatId);
 
-    if (!chat || !chat.isActive) {
+    if (!chat) {
       return res.status(404).json({ message: "채팅방을 찾을 수 없습니다." });
     }
 

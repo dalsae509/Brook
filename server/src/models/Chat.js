@@ -27,16 +27,13 @@ const chatSchema = new mongoose.Schema(
       ref: "Message",
       default: null,
     },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    deletedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );
 
-chatSchema.index({ buyer: 1, isActive: 1 });
-chatSchema.index({ seller: 1, isActive: 1 });
+chatSchema.index({ buyer: 1 });
+chatSchema.index({ seller: 1 });
 chatSchema.index({ product: 1, buyer: 1 });
 
 const Chat = mongoose.model("Chat", chatSchema);

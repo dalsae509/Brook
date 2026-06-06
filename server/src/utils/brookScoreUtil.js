@@ -1,14 +1,16 @@
 import User from "../models/User.js";
 import Review from "../models/Review.js";
+import Report from "../models/Report.js";
 import Chat from "../models/Chat.js";
 import Message from "../models/Message.js";
 
 const RATING_DELTA = { 5: 1.0, 4: 0.5, 3: 0, 2: -0.5, 1: -1.0 };
 
 export const recalculateBrookScore = async (userId) => {
-  const [reviews, user] = await Promise.all([
+  const [reviews, user, confirmedReportCount] = await Promise.all([
     Review.find({ reviewee: userId }),
     User.findById(userId),
+    Report.countDocuments({ reportedUser: userId, status: "reviewed" }),
   ]);
   if (!user) return;
 
@@ -34,8 +36,8 @@ export const recalculateBrookScore = async (userId) => {
     score += Math.max(0, responseRate - 0.5) * 10; // 50% 초과분에 최대 +5
   }
 
-  // 신고 패널티 (건당 -3)
-  score -= user.reportCount * 3;
+  // 신고 패널티 (확인된 신고 건당 -3)
+  score -= confirmedReportCount * 3;
 
   // 범위 고정
   score = Math.max(0, Math.min(99, Math.round(score * 10) / 10));

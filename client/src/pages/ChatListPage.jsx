@@ -10,6 +10,17 @@ function ChatListPage() {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const handleLeave = async (e, chatId) => {
+    e.preventDefault();
+    if (!window.confirm("채팅방을 나가면 내 목록에서 사라집니다. 나가시겠습니까?")) return;
+    try {
+      await axiosInstance.delete(`/api/chats/${chatId}`);
+      setChats((prev) => prev.filter((c) => c._id !== chatId));
+    } catch (error) {
+      toast.error(error.response?.data?.message || "나가기 실패");
+    }
+  };
+
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -54,8 +65,8 @@ function ChatListPage() {
           {chats.map((chat) => {
             const other = user.id === chat.buyer._id ? chat.seller : chat.buyer;
             return (
+              <div key={chat._id} className="relative group">
               <Link
-                key={chat._id}
                 to={`/chats/${chat._id}`}
                 className="flex items-center gap-4 bg-white rounded-2xl shadow p-4 hover:shadow-md transition"
               >
@@ -93,6 +104,13 @@ function ChatListPage() {
                   )}
                 </div>
               </Link>
+              <button
+                onClick={(e) => handleLeave(e, chat._id)}
+                className="absolute top-3 right-3 text-xs text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition px-2 py-1 rounded-lg hover:bg-red-50"
+              >
+                나가기
+              </button>
+              </div>
             );
           })}
         </div>

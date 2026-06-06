@@ -500,7 +500,7 @@ function ProductDetailPage() {
                 수정
               </button>
             )}
-            {!isLive && (
+            {canEdit && (
               <button
                 onClick={handleDeleteProduct}
                 className="text-sm border border-red-200 text-red-500 px-4 py-1.5 rounded-lg hover:border-red-400"
@@ -642,13 +642,18 @@ function ProductDetailPage() {
         )}
 
         <div className="space-y-2 text-lg">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <p>
               판매자:{" "}
               <Link to={`/users/${product.seller?._id}`} className="text-blue-600 hover:underline">
                 {product.seller?.name}
               </Link>
             </p>
+            {product.seller?.brookScore != null && (
+              <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                브룩 {product.seller.brookScore.toFixed(1)}점
+              </span>
+            )}
             {user && !isSeller && (
               <button
                 onClick={() => setShowReportModal(true)}

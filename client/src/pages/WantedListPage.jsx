@@ -187,6 +187,11 @@ function WantedListPage() {
                   <p className="text-xs text-slate-400">
                     {new Date(post.createdAt).toLocaleDateString()}
                   </p>
+                  {post.commentCount > 0 && (
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      💬 {post.commentCount}
+                    </p>
+                  )}
                 </div>
               </div>
             </Link>

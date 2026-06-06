@@ -6,7 +6,7 @@ import {
   getChatDetail,
   getChatMessages,
   sendMessage,
-  closeChat,
+  deleteChat,
 } from "../controllers/chatController.js";
 
 const router = express.Router();
@@ -14,7 +14,7 @@ const router = express.Router();
 router.get("/", authMiddleware, getMyChats);
 router.post("/", authMiddleware, createChat);
 router.get("/:chatId", authMiddleware, getChatDetail);
-router.patch("/:chatId/close", authMiddleware, closeChat);
+router.delete("/:chatId", authMiddleware, deleteChat);
 router.get("/:chatId/messages", authMiddleware, getChatMessages);
 router.post("/:chatId/messages", authMiddleware, sendMessage);
 

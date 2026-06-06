@@ -12,6 +12,10 @@ function ReportModal({ reportedUserId, reportedUserName, productId, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reason) { toast.error("신고 사유를 선택해주세요."); return; }
+    if (reason === "기타" && !description.trim()) {
+      toast.error("'기타' 선택 시 상세 내용을 입력해주세요.");
+      return;
+    }
     try {
       setSubmitting(true);
       await axiosInstance.post("/api/reports", {
@@ -62,9 +66,11 @@ function ReportModal({ reportedUserId, reportedUserName, productId, onClose }) {
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="상세 내용 (선택)"
+            placeholder={reason === "기타" ? "상세 내용을 입력해주세요 (필수)" : "상세 내용 (선택)"}
             maxLength={500}
-            className="w-full border rounded-lg px-4 py-2.5 text-sm h-24 resize-none"
+            className={`w-full border rounded-lg px-4 py-2.5 text-sm h-24 resize-none ${
+              reason === "기타" && !description.trim() ? "border-red-300" : ""
+            }`}
           />
 
           <div className="flex gap-2 pt-1">

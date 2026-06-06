@@ -209,6 +209,7 @@ function AdminPage() {
                   <th className="text-left px-5 py-3">이름</th>
                   <th className="text-left px-5 py-3">이메일</th>
                   <th className="text-left px-5 py-3">역할</th>
+                  <th className="text-left px-5 py-3">브룩 지수</th>
                   <th className="text-left px-5 py-3">가입일</th>
                   <th className="px-5 py-3"></th>
                 </tr>
@@ -228,6 +229,9 @@ function AdminPage() {
                       }`}>
                         {u.role === "admin" ? "관리자" : "일반"}
                       </span>
+                    </td>
+                    <td className="px-5 py-3 text-slate-500">
+                      {u.brookScore?.toFixed(1) ?? "-"}점
                     </td>
                     <td className="px-5 py-3 text-slate-500">{new Date(u.createdAt).toLocaleDateString()}</td>
                     <td className="px-5 py-3 text-right">
@@ -411,7 +415,6 @@ function AdminPage() {
           )}
         </div>
       )}
-      )}
 
       {/* 신고 관리 */}
       {tab === "reports" && (
@@ -448,9 +451,10 @@ function AdminPage() {
                     <th className="text-left px-5 py-3">피신고자</th>
                     <th className="text-left px-5 py-3">사유</th>
                     <th className="text-left px-5 py-3">내용</th>
+                    <th className="text-left px-5 py-3">연관 상품</th>
                     <th className="text-left px-5 py-3">상태</th>
                     <th className="text-left px-5 py-3">일시</th>
-                    {reportStatus === "pending" && <th className="px-5 py-3"></th>}
+                    <th className="px-5 py-3"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -458,13 +462,24 @@ function AdminPage() {
                     <tr key={r._id} className="hover:bg-slate-50">
                       <td className="px-5 py-3 text-slate-500">{r.reporter?.name}</td>
                       <td className="px-5 py-3 font-medium">
-                        {r.reportedUser?.name}
+                        <Link to={`/users/${r.reportedUser?._id}`} className="hover:underline text-blue-600">
+                          {r.reportedUser?.name}
+                        </Link>
                         <span className="ml-1 text-xs text-slate-400">({r.reportedUser?.brookScore?.toFixed(1) ?? "-"}점)</span>
                       </td>
                       <td className="px-5 py-3">
                         <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{r.reason}</span>
                       </td>
                       <td className="px-5 py-3 text-slate-500 max-w-[150px] truncate">{r.description || "-"}</td>
+                      <td className="px-5 py-3">
+                        {r.product ? (
+                          <Link to={`/products/${r.product._id}`} className="text-xs text-blue-500 hover:underline">
+                            {r.product.title}
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
+                      </td>
                       <td className="px-5 py-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                           r.status === "pending" ? "bg-yellow-100 text-yellow-700"
@@ -475,8 +490,8 @@ function AdminPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</td>
-                      {reportStatus === "pending" && (
-                        <td className="px-5 py-3">
+                      <td className="px-5 py-3">
+                        {r.status === "pending" && (
                           <div className="flex gap-1">
                             <button
                               onClick={() => handleProcessReport(r._id, "reviewed")}
@@ -491,8 +506,8 @@ function AdminPage() {
                               기각
                             </button>
                           </div>
-                        </td>
-                      )}
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

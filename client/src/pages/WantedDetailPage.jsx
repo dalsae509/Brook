@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import axiosInstance from "../api/axios";
 import useAuthStore from "../store/authStore";
 import { CATEGORIES } from "../utils/categories";
+import ReportModal from "../components/ReportModal";
 
 function WantedDetailPage() {
   const { id } = useParams();
@@ -20,6 +21,7 @@ function WantedDetailPage() {
   // 수정 모드
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [reportTarget, setReportTarget] = useState(null);
 
   const fetchPost = useCallback(async () => {
     try {
@@ -218,7 +220,17 @@ function WantedDetailPage() {
             <p className="text-slate-700 whitespace-pre-wrap mb-4">{post.description}</p>
 
             <div className="flex items-center justify-between text-sm text-slate-400 pt-3 border-t">
-              <span>{post.author.name}</span>
+              <div className="flex items-center gap-2">
+                <span>{post.author.name}</span>
+                {user && !isAuthor && (
+                  <button
+                    onClick={() => setReportTarget({ userId: post.author._id, userName: post.author.name })}
+                    className="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-0.5 rounded-lg"
+                  >
+                    신고
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-3">
                 {post.targetPrice && (
                   <span className="text-slate-600 font-medium">희망가: {post.targetPrice.toLocaleString()}원 이하</span>
@@ -255,7 +267,7 @@ function WantedDetailPage() {
                     </div>
                     <p className="text-slate-700 text-sm">{comment.content}</p>
                   </div>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex gap-2 shrink-0 items-start">
                     {isAuthor && post.status === "open" && comment.author._id !== user.id && (
                       chattedSellerIds.has(comment.author._id) ? (
                         <button
@@ -272,6 +284,14 @@ function WantedDetailPage() {
                           채팅하기
                         </button>
                       )
+                    )}
+                    {user && comment.author._id !== user.id && (
+                      <button
+                        onClick={() => setReportTarget({ userId: comment.author._id, userName: comment.author.name })}
+                        className="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-1 rounded-lg"
+                      >
+                        신고
+                      </button>
                     )}
                     {user && comment.author._id === user.id && (
                       <button onClick={() => handleDeleteComment(comment._id)} className="text-xs text-red-400 hover:text-red-600">삭제</button>
@@ -310,6 +330,14 @@ function WantedDetailPage() {
           <p className="text-center text-slate-400 text-sm pt-2 border-t">댓글을 달려면 로그인이 필요합니다.</p>
         )}
       </div>
+
+      {reportTarget && (
+        <ReportModal
+          reportedUserId={reportTarget.userId}
+          reportedUserName={reportTarget.userName}
+          onClose={() => setReportTarget(null)}
+        />
+      )}
     </div>
   );
 }

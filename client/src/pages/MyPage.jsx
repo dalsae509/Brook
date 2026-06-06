@@ -19,7 +19,7 @@ function getProductStatus(product) {
 }
 
 function MyPage() {
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const navigate = useNavigate();
   const [myProducts, setMyProducts] = useState([]);
   const [myBids, setMyBids] = useState([]);
@@ -29,6 +29,7 @@ function MyPage() {
   const [myReviews, setMyReviews] = useState([]);
   const [myWantedPosts, setMyWantedPosts] = useState([]);
   const [myCommentedPosts, setMyCommentedPosts] = useState([]);
+  const [myReports, setMyReports] = useState([]);
   const [averageRating, setAverageRating] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +48,7 @@ function MyPage() {
     try {
       setLoading(true);
 
-      const [productsRes, bidsRes, winsRes, purchasesRes, wishlistRes, reviewsRes, wantedRes, commentedRes] = await Promise.all([
+      const [productsRes, bidsRes, winsRes, purchasesRes, wishlistRes, reviewsRes, wantedRes, commentedRes, meRes, myReportsRes] = await Promise.all([
         axiosInstance.get("/api/users/me/products"),
         axiosInstance.get("/api/users/me/bids"),
         axiosInstance.get("/api/users/me/wins"),
@@ -56,6 +57,8 @@ function MyPage() {
         axiosInstance.get(`/api/reviews/user/${user.id}`),
         axiosInstance.get("/api/wanted/my"),
         axiosInstance.get("/api/wanted/my-comments"),
+        axiosInstance.get("/api/auth/me"),
+        axiosInstance.get("/api/reports/me"),
       ]);
 
       setMyProducts(productsRes.data.products || []);
@@ -67,6 +70,9 @@ function MyPage() {
       setMyWantedPosts(wantedRes.data.posts || []);
       setMyCommentedPosts(commentedRes.data.posts || []);
       setAverageRating(reviewsRes.data.averageRating);
+      const me = meRes.data.user;
+      updateUser({ brookScore: me.brookScore, completedDeals: me.completedDeals, totalDeals: me.totalDeals });
+      setMyReports(myReportsRes.data.reports || []);
     } catch (error) {
       toast.error(error.response?.data?.message || "마이페이지 불러오기 실패");
     } finally {
@@ -204,7 +210,7 @@ function MyPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {myWins.map((product) => (
+            {myWins.map((product) => product?._id ? (
               <Link
                 key={product._id}
                 to={`/products/${product._id}`}
@@ -218,7 +224,7 @@ function MyPage() {
                   판매자: {product.seller?.name}
                 </p>
               </Link>
-            ))}
+            ) : null)}
           </div>
         )}
       </section>
@@ -226,12 +232,13 @@ function MyPage() {
       <section>
         <h2 className="text-xl sm:text-2xl font-semibold mb-4">즉시구매 내역</h2>
         {myPurchases.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-6 text-slate-500">
-            즉시구매한 상품이 없습니다.
+          <div className="bg-white rounded-2xl shadow p-8 text-center">
+            <p className="text-3xl mb-2">🛍️</p>
+            <p className="text-slate-500">즉시구매한 상품이 없습니다.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {myPurchases.map((product) => (
+            {myPurchases.map((product) => product?._id ? (
               <Link
                 key={product._id}
                 to={`/products/${product._id}`}
@@ -250,7 +257,7 @@ function MyPage() {
                   </span>
                 </p>
               </Link>
-            ))}
+            ) : null)}
           </div>
         )}
       </section>
@@ -362,6 +369,49 @@ function MyPage() {
                 </div>
                 <p className="text-sm text-slate-400 shrink-0">{new Date(post.createdAt).toLocaleDateString()}</p>
               </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-xl sm:text-2xl font-semibold mb-4">내가 신고한 내역</h2>
+        {myReports.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow p-8 text-center">
+            <p className="text-3xl mb-2">🚩</p>
+            <p className="text-slate-500">신고한 내역이 없습니다.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {myReports.map((report) => (
+              <div key={report._id} className="bg-white rounded-2xl shadow p-4 flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      report.status === "pending"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : report.status === "reviewed"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-slate-100 text-slate-500"
+                    }`}>
+                      {report.status === "pending" ? "검토 중" : report.status === "reviewed" ? "확인됨" : "기각됨"}
+                    </span>
+                    <span className="text-xs text-slate-400">{report.reason}</span>
+                  </div>
+                  <p className="text-sm text-slate-700">
+                    <span className="font-medium">{report.reportedUser?.name}</span> 님 신고
+                    {report.product?.title && (
+                      <span className="text-slate-400"> · {report.product.title}</span>
+                    )}
+                  </p>
+                  {report.description && (
+                    <p className="text-xs text-slate-400 truncate mt-0.5">{report.description}</p>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 shrink-0">
+                  {new Date(report.createdAt).toLocaleDateString()}
+                </p>
+              </div>
             ))}
           </div>
         )}

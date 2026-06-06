@@ -47,7 +47,18 @@ export const getPosts = async (req, res) => {
       WantedPost.countDocuments(query),
     ]);
 
-    res.json({ posts, total, totalPages: Math.ceil(total / limit) });
+    const postIds = posts.map((p) => p._id);
+    const commentCounts = await WantedComment.aggregate([
+      { $match: { wantedPost: { $in: postIds } } },
+      { $group: { _id: "$wantedPost", count: { $sum: 1 } } },
+    ]);
+    const countMap = Object.fromEntries(commentCounts.map((c) => [c._id.toString(), c.count]));
+    const postsWithCount = posts.map((p) => ({
+      ...p.toObject(),
+      commentCount: countMap[p._id.toString()] ?? 0,
+    }));
+
+    res.json({ posts: postsWithCount, total, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     console.error("getPosts error:", error.message);
     res.status(500).json({ message: "서버 오류" });

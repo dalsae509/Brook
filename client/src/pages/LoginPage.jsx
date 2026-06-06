@@ -31,7 +31,7 @@ function LoginPage() {
     try {
       setLoading(true);
       const response = await axiosInstance.post("/api/auth/login", form);
-      setAuth({ user: response.data.user, token: response.data.token });
+      setAuth({ user: response.data.user, token: response.data.token, refreshToken: response.data.refreshToken });
       toast.success("로그인 성공");
       navigate("/");
     } catch (error) {
