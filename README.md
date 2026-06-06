@@ -313,7 +313,7 @@ const newPrice = Math.min(winnerMax, second.max + unit);
 
 ### 10. 테스트 & 빌드 게이트
 
-`node:test` + `supertest` + `mongodb-memory-server`(레플리카셋, 트랜잭션 지원)로 인증·거래 완료·자동 입찰·시세·대시보드·검색·추천 등 핵심 플로우를 **29개** 테스트로 검증합니다. GitHub Actions가 push/PR마다 클라이언트 lint·build와 서버 테스트·문법 검사를 실행해, 깨진 코드가 배포되는 것을 차단합니다.
+`node:test` + `supertest` + `mongodb-memory-server`(레플리카셋, 트랜잭션 지원)로 인증·거래 완료·자동 입찰·채팅·브룩 지수·신고·시세·대시보드·검색·추천 등 핵심 플로우를 **41개** 테스트로 검증합니다 (`npm run test:coverage`로 커버리지 측정). GitHub Actions가 push/PR마다 클라이언트 lint·build와 서버 테스트·문법 검사를 실행해, 깨진 코드가 배포되는 것을 차단합니다.
 
 ---
 
