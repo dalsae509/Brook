@@ -70,7 +70,7 @@ function MyPage() {
       setMyCommentedPosts(commentedRes.data.posts || []);
       setAverageRating(reviewsRes.data.averageRating);
       const me = meRes.data.user;
-      updateUser({ brookScore: me.brookScore, completedDeals: me.completedDeals, totalDeals: me.totalDeals });
+      updateUser({ brookScore: me.brookScore, completedDeals: me.completedDeals, totalDeals: me.totalDeals, cancelledDeals: me.cancelledDeals });
       setMyReports(myReportsRes.data.reports || []);
     } catch (error) {
       toast.error(error.response?.data?.message || "마이페이지 불러오기 실패");
@@ -114,6 +114,7 @@ function MyPage() {
             score={user?.brookScore ?? 36.5}
             completedDeals={user?.completedDeals ?? 0}
             totalDeals={user?.totalDeals ?? 0}
+            cancelledDeals={user?.cancelledDeals ?? 0}
           />
         </div>
       </div>

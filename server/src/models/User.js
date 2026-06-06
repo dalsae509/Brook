@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema(
     brookScore: { type: Number, default: 36.5, min: 0, max: 99 },
     completedDeals: { type: Number, default: 0, min: 0 },
     totalDeals: { type: Number, default: 0, min: 0 },
+    cancelledDeals: { type: Number, default: 0, min: 0 },
     reportCount: { type: Number, default: 0, min: 0 },
   },
   {

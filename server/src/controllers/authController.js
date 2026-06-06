@@ -53,6 +53,7 @@ export const register = async (req, res) => {
         brookScore: user.brookScore,
         completedDeals: user.completedDeals,
         totalDeals: user.totalDeals,
+        cancelledDeals: user.cancelledDeals,
       },
     });
   } catch (error) {
@@ -116,6 +117,7 @@ export const login = async (req, res) => {
         brookScore: user.brookScore,
         completedDeals: user.completedDeals,
         totalDeals: user.totalDeals,
+        cancelledDeals: user.cancelledDeals,
       },
     });
   } catch (error) {

@@ -1,5 +1,8 @@
-function BrookScore({ score, completedDeals, totalDeals, size = "md" }) {
+function BrookScore({ score, completedDeals, totalDeals, cancelledDeals, size = "md" }) {
   if (score == null) return null;
+
+  // 완료율은 종결된 거래(완료+취소) 기준 — 진행 중 거래는 제외
+  const concluded = (completedDeals ?? 0) + (cancelledDeals ?? 0);
 
   const getColor = (s) => {
     if (s >= 70) return { bar: "bg-red-400", text: "text-red-500", label: "매우 신뢰" };
@@ -33,9 +36,9 @@ function BrookScore({ score, completedDeals, totalDeals, size = "md" }) {
       {(completedDeals != null || totalDeals != null) && (
         <p className="text-xs text-slate-400">
           거래 완료 {completedDeals ?? 0}회
-          {totalDeals > 0 && (
+          {concluded > 0 && (
             <span className="ml-1">
-              (완료율 {Math.round((completedDeals / totalDeals) * 100)}%)
+              (완료율 {Math.round((completedDeals / concluded) * 100)}%)
             </span>
           )}
         </p>

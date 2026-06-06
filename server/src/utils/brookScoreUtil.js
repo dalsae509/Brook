@@ -19,9 +19,10 @@ export const recalculateBrookScore = async (userId) => {
   // 후기 반영
   reviews.forEach((r) => { score += RATING_DELTA[r.rating] ?? 0; });
 
-  // 거래 완료율 (최대 +10)
-  if (user.totalDeals > 0) {
-    const completionRate = Math.min(user.completedDeals / user.totalDeals, 1);
+  // 거래 완료율 (최대 +10) — 종결된 거래(완료+취소) 기준, 진행 중 거래는 제외
+  const concludedDeals = user.completedDeals + user.cancelledDeals;
+  if (concludedDeals > 0) {
+    const completionRate = Math.min(user.completedDeals / concludedDeals, 1);
     score += completionRate * 10;
   }
 

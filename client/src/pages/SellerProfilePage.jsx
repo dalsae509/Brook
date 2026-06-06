@@ -86,6 +86,7 @@ function SellerProfilePage() {
             score={seller.brookScore}
             completedDeals={seller.completedDeals}
             totalDeals={seller.totalDeals}
+            cancelledDeals={seller.cancelledDeals}
             size="lg"
           />
         </div>

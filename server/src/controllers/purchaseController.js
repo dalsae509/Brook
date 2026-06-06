@@ -211,6 +211,10 @@ export const cancelPurchase = async (req, res) => {
       session.endSession();
     }
 
+    // 취소된 거래 — 판매자 cancelledDeals 증가 + 브룩 지수 재계산(완료율 반영)
+    await User.findByIdAndUpdate(existing.seller, { $inc: { cancelledDeals: 1 } });
+    recalculateBrookScore(existing.seller).catch(() => {});
+
     return res.status(200).json({ message: "예약 취소 완료", product });
   } catch (error) {
     console.error("cancelPurchase error:", error);

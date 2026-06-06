@@ -77,3 +77,20 @@ test("거래 완료: 인증 토큰 없으면 401", async () => {
   const res = await request(app).post(`/api/products/${product._id}/confirm`);
   assert.equal(res.status, 401);
 });
+
+test("예약 취소: 판매자 cancelledDeals 증가 + 상품 available 복귀", async () => {
+  const seller = await createUser("판매자", "seller@example.com");
+  const buyer = await createUser("구매자", "buyer@example.com");
+  const product = await createReservedProduct(seller, buyer);
+
+  const res = await request(app)
+    .post(`/api/products/${product._id}/cancel`)
+    .set("Authorization", `Bearer ${makeToken(buyer)}`);
+
+  assert.equal(res.status, 200);
+  const updated = await Product.findById(product._id);
+  assert.equal(updated.fixedStatus, "available");
+  assert.equal(updated.buyer, null);
+  const updatedSeller = await User.findById(seller._id);
+  assert.equal(updatedSeller.cancelledDeals, 1);
+});
