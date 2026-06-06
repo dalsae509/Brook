@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import {
+  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 import axiosInstance from "../api/axios";
+
+const PIE_COLORS = ["#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f87171", "#94a3b8", "#f472b6", "#38bdf8"];
 
 const SALE_TYPE_LABELS = { fixed: "즉시구매", auction: "경매" };
 const STATUS_LABELS = {
@@ -10,7 +16,7 @@ const STATUS_LABELS = {
 };
 
 function AdminPage() {
-  const [tab, setTab] = useState("users");
+  const [tab, setTab] = useState("analytics");
 
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -35,6 +41,9 @@ function AdminPage() {
   const [reportTotalPages, setReportTotalPages] = useState(1);
   const [reportStatus, setReportStatus] = useState("pending");
   const [reportsLoading, setReportsLoading] = useState(true);
+
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   const searchDebounceRef = useRef(null);
 
@@ -110,10 +119,23 @@ function AdminPage() {
     }
   };
 
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setAnalyticsLoading(true);
+      const res = await axiosInstance.get("/api/admin/analytics");
+      setAnalytics(res.data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "분석 데이터 불러오기 실패");
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, []);
+
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { fetchWantedPosts(); }, [fetchWantedPosts]);
   useEffect(() => { fetchReports(); }, [fetchReports]);
+  useEffect(() => { fetchAnalytics(); }, [fetchAnalytics]);
 
   const handleDeleteUser = async (userId, userName) => {
     if (!window.confirm(`"${userName}" 사용자를 삭제하시겠습니까?`)) return;
@@ -178,6 +200,7 @@ function AdminPage() {
       {/* 탭 */}
       <div className="flex gap-2 flex-wrap">
         {[
+          { key: "analytics", label: "📊 분석" },
           { key: "users", label: `사용자 관리 (${users.length})` },
           { key: "products", label: `상품 관리 (${productTotal})` },
           { key: "wanted", label: `삽니다 관리 (${wantedTotal})` },
@@ -196,6 +219,89 @@ function AdminPage() {
           </button>
         ))}
       </div>
+
+      {/* 분석 */}
+      {tab === "analytics" && (
+        analyticsLoading || !analytics ? (
+          <div className="bg-white rounded-2xl shadow p-6 text-slate-500">불러오는 중...</div>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-white rounded-2xl shadow p-5">
+                <p className="text-sm text-slate-400">총 거래액 (GMV)</p>
+                <p className="text-2xl font-bold mt-1 text-green-600">{analytics.summary.gmv.toLocaleString()}원</p>
+              </div>
+              <div className="bg-white rounded-2xl shadow p-5">
+                <p className="text-sm text-slate-400">총 거래 건수</p>
+                <p className="text-2xl font-bold mt-1">{analytics.summary.transactions.toLocaleString()}건</p>
+              </div>
+              <div className="bg-white rounded-2xl shadow p-5">
+                <p className="text-sm text-slate-400">총 사용자</p>
+                <p className="text-2xl font-bold mt-1 text-blue-600">{analytics.summary.totalUsers.toLocaleString()}명</p>
+              </div>
+              <div className="bg-white rounded-2xl shadow p-5">
+                <p className="text-sm text-slate-400">총 상품</p>
+                <p className="text-2xl font-bold mt-1">{analytics.summary.totalProducts.toLocaleString()}개</p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow p-5">
+              <h2 className="font-semibold mb-4">월별 거래액 (GMV)</h2>
+              {analytics.salesByMonth.length === 0 ? (
+                <p className="text-slate-400 text-sm py-10 text-center">거래 완료 데이터가 없습니다.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={analytics.salesByMonth} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" />
+                    <YAxis fontSize={12} stroke="#94a3b8" tickFormatter={(v) => `${(v / 10000).toLocaleString()}만`} />
+                    <Tooltip formatter={(v) => `${v.toLocaleString()}원`} />
+                    <Bar dataKey="gmv" fill="#34d399" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-white rounded-2xl shadow p-5">
+                <h2 className="font-semibold mb-4">신규 가입자 추이</h2>
+                {analytics.usersByMonth.length === 0 ? (
+                  <p className="text-slate-400 text-sm py-10 text-center">데이터가 없습니다.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <LineChart data={analytics.usersByMonth} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" />
+                      <YAxis fontSize={12} stroke="#94a3b8" allowDecimals={false} />
+                      <Tooltip formatter={(v) => `${v}명`} />
+                      <Line type="monotone" dataKey="count" stroke="#60a5fa" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl shadow p-5">
+                <h2 className="font-semibold mb-4">카테고리 분포</h2>
+                {analytics.categoryDistribution.length === 0 ? (
+                  <p className="text-slate-400 text-sm py-10 text-center">데이터가 없습니다.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <PieChart>
+                      <Pie data={analytics.categoryDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
+                        {analytics.categoryDistribution.map((entry, i) => (
+                          <Cell key={entry.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v) => `${v}개`} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      )}
 
       {/* 사용자 관리 */}
       {tab === "users" && (
