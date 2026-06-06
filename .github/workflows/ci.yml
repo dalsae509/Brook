@@ -43,3 +43,4 @@ jobs:
           for f in $(find src -name "*.js"); do
             node --check "$f" || exit 1
           done
+      - run: npm test
