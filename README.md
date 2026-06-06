@@ -387,6 +387,23 @@ npm run dev
 클라이언트: http://localhost:5173  
 서버: http://localhost:5000
 
+### 데모 데이터 시드
+
+```bash
+cd server
+npm run seed
+```
+
+현실적인 더미 데이터(유저·상품·입찰·후기·검색 기록)를 생성해 대시보드·추천·시세·인기 검색어가 바로 채워집니다. 데모 계정 4종도 함께 생성됩니다.
+> ⚠️ 기존 User/Product/Bid/Review/SearchKeyword 데이터를 삭제 후 재생성합니다.
+
+### 테스트
+
+```bash
+cd server
+npm test
+```
+
 ---
 
 ## API 명세
