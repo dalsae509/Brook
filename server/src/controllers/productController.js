@@ -408,3 +408,43 @@ export const getPriceStats = async (req, res) => {
     return res.status(500).json({ message: "서버 오류" });
   }
 };
+
+// 비슷한 상품 추천 — 같은 카테고리의 구매 가능한 상품을 가격 근접도/조회수 기준으로
+export const getRecommendations = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const base = await Product.findById(id).select("category saleType fixedPrice currentPrice startPrice");
+    if (!base) {
+      return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
+    }
+
+    const basePrice =
+      base.saleType === "fixed" ? base.fixedPrice : base.currentPrice ?? base.startPrice;
+
+    // 구매 가능한(판매중/경매 진행 전·중) 같은 카테고리 상품
+    const candidates = await Product.find({
+      _id: { $ne: base._id },
+      category: base.category,
+      $or: [
+        { saleType: "fixed", fixedStatus: "available" },
+        { saleType: "auction", auctionStatus: { $in: ["pending", "live"] } },
+      ],
+    })
+      .select("title images saleType fixedPrice currentPrice startPrice auctionStatus views")
+      .limit(50)
+      .lean();
+
+    // 가격 근접도 우선, 동일 시 조회수 높은 순으로 정렬해 상위 8개
+    const priceOf = (p) => (p.saleType === "fixed" ? p.fixedPrice : p.currentPrice ?? p.startPrice) ?? 0;
+    const ranked = candidates
+      .map((p) => ({ p, priceDiff: basePrice != null ? Math.abs(priceOf(p) - basePrice) : 0 }))
+      .sort((a, b) => a.priceDiff - b.priceDiff || (b.p.views ?? 0) - (a.p.views ?? 0))
+      .slice(0, 8)
+      .map((x) => x.p);
+
+    return res.status(200).json({ products: ranked });
+  } catch (error) {
+    console.error("getRecommendations error:", error.message);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};

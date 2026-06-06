@@ -30,6 +30,7 @@ function ProductDetailPage() {
   const [bidAmount, setBidAmount] = useState("");
   const [proxyMax, setProxyMax] = useState(null);
   const [proxyInput, setProxyInput] = useState("");
+  const [recommendations, setRecommendations] = useState([]);
   const [timeLeft, setTimeLeft] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -132,6 +133,14 @@ function ProductDetailPage() {
       .then((res) => setProxyMax(res.data.maxAmount))
       .catch(() => {});
   }, [user, id, product?.saleType, product?.auctionStatus]);
+
+  // 비슷한 상품 추천
+  useEffect(() => {
+    axiosInstance
+      .get(`/api/products/${id}/recommendations`)
+      .then((res) => setRecommendations(res.data.products || []))
+      .catch(() => setRecommendations([]));
+  }, [id]);
 
   const handleToggleWishlist = async () => {
     try {
@@ -1036,6 +1045,41 @@ function ProductDetailPage() {
           </div>
         )}
       </div>
+
+      {/* 비슷한 상품 추천 */}
+      {recommendations.length > 0 && (
+        <section className="lg:col-span-3">
+          <h2 className="text-xl font-bold mb-4">비슷한 상품</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {recommendations.map((p) => (
+              <Link
+                key={p._id}
+                to={`/products/${p._id}`}
+                className="bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden"
+              >
+                <div className="aspect-square bg-slate-100 overflow-hidden">
+                  {p.images?.[0] ? (
+                    <img src={getCloudinaryUrl(p.images[0], { width: 300, height: 300 })} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300 text-sm">이미지 없음</div>
+                  )}
+                </div>
+                <div className="p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${p.saleType === "fixed" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
+                      {p.saleType === "fixed" ? "즉시구매" : "경매"}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium truncate">{p.title}</p>
+                  <p className="text-sm text-slate-700 mt-0.5">
+                    {(p.saleType === "fixed" ? p.fixedPrice : p.currentPrice ?? p.startPrice)?.toLocaleString()}원
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 모바일 하단 고정 액션 바 */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-40 px-4 py-3">

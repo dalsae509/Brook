@@ -67,6 +67,26 @@ test("시세 분석: 거래 내역 없으면 count 0", async () => {
   assert.equal(res.body.avg, null);
 });
 
+test("추천: 같은 카테고리의 구매 가능한 상품만, 본인 제외", async () => {
+  const seller = await createUser("판매자", "seller@example.com");
+  const base = await Product.create({ seller: seller._id, title: "기준", description: "d", category: "전자기기", saleType: "fixed", fixedPrice: 50000, fixedStatus: "available" });
+  await Product.create([
+    { seller: seller._id, title: "비슷1", description: "d", category: "전자기기", saleType: "fixed", fixedPrice: 52000, fixedStatus: "available" },
+    { seller: seller._id, title: "비슷2", description: "d", category: "전자기기", saleType: "auction", startPrice: 48000, currentPrice: 48000, auctionStatus: "live" },
+    { seller: seller._id, title: "판매완료제외", description: "d", category: "전자기기", saleType: "fixed", fixedPrice: 50000, fixedStatus: "sold" },
+    { seller: seller._id, title: "다른카테고리", description: "d", category: "의류", saleType: "fixed", fixedPrice: 50000, fixedStatus: "available" },
+  ]);
+
+  const res = await request(app).get(`/api/products/${base._id}/recommendations`);
+  assert.equal(res.status, 200);
+  const titles = res.body.products.map((p) => p.title);
+  assert.equal(res.body.products.length, 2);
+  assert.ok(titles.includes("비슷1") && titles.includes("비슷2"));
+  assert.ok(!titles.includes("판매완료제외"));
+  assert.ok(!titles.includes("다른카테고리"));
+  assert.ok(!titles.includes("기준"));
+});
+
 test("상품 삭제: 예약 중(reserved)인 상품은 삭제 불가", async () => {
   const seller = await createUser("판매자", "seller@example.com");
   const buyer = await createUser("구매자", "buyer@example.com");

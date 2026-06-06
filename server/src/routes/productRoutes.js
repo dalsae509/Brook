@@ -8,6 +8,7 @@ import {
   deleteProduct,
   getCategories,
   getPriceStats,
+  getRecommendations,
 } from "../controllers/productController.js";
 import {
   purchaseProduct,
@@ -22,6 +23,7 @@ router.get("/categories", getCategories);
 router.get("/price-stats", getPriceStats);
 router.get("/", getProducts);
 router.get("/:id", getProductDetail);
+router.get("/:id/recommendations", getRecommendations);
 router.post("/", authMiddleware, createProduct);
 router.patch("/:id", authMiddleware, updateProduct);
 router.delete("/:id", authMiddleware, deleteProduct);
