@@ -57,15 +57,22 @@ function ChatRoomPage() {
       );
     };
 
+    const handleClosed = (payload) => {
+      if (payload.chatId !== chatId) return;
+      setChat((prev) => (prev ? { ...prev, closedBy: payload.closedBy } : prev));
+    };
+
     socket.on("connect", handleReconnect);
     socket.on("chat:message", handleMessage);
     socket.on("chat:read", handleRead);
+    socket.on("chat:closed", handleClosed);
 
     return () => {
       socket.emit("chat:leave", chatId);
       socket.off("connect", handleReconnect);
       socket.off("chat:message", handleMessage);
       socket.off("chat:read", handleRead);
+      socket.off("chat:closed", handleClosed);
     };
   }, [chatId, user.id]);
 
@@ -131,10 +138,25 @@ function ChatRoomPage() {
     }
   };
 
+  const handleClose = async () => {
+    if (!window.confirm("거래를 종료하시겠습니까? 양쪽 모두 종료에 동의하면 더 이상 메시지를 보낼 수 없습니다.")) return;
+    try {
+      const res = await axiosInstance.post(`/api/chats/${chatId}/close`);
+      setChat((prev) => (prev ? { ...prev, closedBy: res.data.closedBy } : prev));
+      toast.success(res.data.message);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "거래 종료 실패");
+    }
+  };
+
   if (loading) return <div className="max-w-2xl mx-auto text-center py-10 text-slate-400">불러오는 중...</div>;
   if (!chat) return <div>채팅방을 찾을 수 없습니다.</div>;
 
   const other = user.id === chat.buyer._id ? chat.seller : chat.buyer;
+  const closedBy = (chat.closedBy || []).map(String);
+  const bothClosed = closedBy.length >= 2;
+  const iRequestedClose = closedBy.includes(user.id);
+  const otherRequestedClose = closedBy.some((id) => id !== user.id);
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-120px)]">
@@ -156,13 +178,41 @@ function ChatRoomPage() {
             {chat.product?.title ?? chat.wantedPost?.title ?? ""}
           </p>
         </div>
-        <button
-          onClick={handleLeave}
-          className="text-xs text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-300 px-3 py-1.5 rounded-lg"
-        >
-          나가기
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {!bothClosed && !iRequestedClose && (
+            <button
+              onClick={handleClose}
+              className="text-xs text-slate-400 hover:text-amber-600 border border-slate-200 hover:border-amber-300 px-3 py-1.5 rounded-lg"
+            >
+              거래 종료
+            </button>
+          )}
+          <button
+            onClick={handleLeave}
+            className="text-xs text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-300 px-3 py-1.5 rounded-lg"
+          >
+            나가기
+          </button>
+        </div>
       </div>
+
+      {/* 거래 종료 상태 안내 */}
+      {bothClosed ? (
+        <div className="bg-slate-100 text-slate-500 text-xs text-center py-2 px-4">
+          종료된 거래입니다. 더 이상 메시지를 보낼 수 없습니다.
+        </div>
+      ) : iRequestedClose ? (
+        <div className="bg-amber-50 text-amber-600 text-xs text-center py-2 px-4">
+          거래 종료를 요청했습니다. 상대방의 동의를 기다리는 중입니다.
+        </div>
+      ) : otherRequestedClose ? (
+        <div className="bg-amber-50 text-amber-700 text-xs text-center py-2 px-4 flex items-center justify-center gap-2">
+          상대방이 거래 종료를 요청했습니다.
+          <button onClick={handleClose} className="underline font-medium hover:text-amber-900">
+            종료에 동의
+          </button>
+        </div>
+      ) : null}
 
       {/* 메시지 목록 */}
       <div className="flex-1 overflow-y-auto bg-slate-50 px-4 py-4 space-y-3">
@@ -225,6 +275,11 @@ function ChatRoomPage() {
       </div>
 
       {/* 입력창 */}
+      {bothClosed ? (
+        <div className="bg-white rounded-b-2xl shadow px-4 py-4 text-center text-slate-400 text-sm">
+          종료된 거래입니다.
+        </div>
+      ) : (
       <div className="bg-white rounded-b-2xl shadow px-4 py-3 space-y-2">
         {/* 이미지 미리보기 */}
         {imagePreview && (
@@ -275,6 +330,7 @@ function ChatRoomPage() {
           </button>
         </form>
       </div>
+      )}
     </div>
   );
 }

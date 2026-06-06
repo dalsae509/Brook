@@ -175,6 +175,54 @@ export const deleteChat = async (req, res) => {
   }
 };
 
+// 거래 종료 요청 — 양쪽 모두 요청하면 송수신 차단(하드 종료)
+export const closeChat = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ message: "채팅방을 찾을 수 없습니다." });
+    }
+
+    const isParticipant =
+      chat.buyer.toString() === req.user._id.toString() ||
+      chat.seller.toString() === req.user._id.toString();
+    if (!isParticipant) {
+      return res.status(403).json({ message: "접근 권한이 없습니다." });
+    }
+
+    const alreadyRequested = chat.closedBy.some(
+      (id) => id.toString() === req.user._id.toString()
+    );
+    if (alreadyRequested) {
+      return res.status(400).json({ message: "이미 거래 종료를 요청했습니다." });
+    }
+
+    const updated = await Chat.findByIdAndUpdate(
+      chatId,
+      { $addToSet: { closedBy: req.user._id } },
+      { new: true }
+    );
+    const closedBy = updated.closedBy.map(String);
+    const bothClosed = closedBy.length >= 2;
+
+    const io = req.app.get("io");
+    io.to(`chat:${chatId}`).emit("chat:closed", { chatId, closedBy, bothClosed });
+
+    return res.status(200).json({
+      message: bothClosed
+        ? "거래가 종료되었습니다."
+        : "거래 종료를 요청했습니다. 상대방의 동의를 기다립니다.",
+      closedBy,
+      bothClosed,
+    });
+  } catch (error) {
+    console.error("closeChat error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
 export const sendMessage = async (req, res) => {
   try {
     const { chatId } = req.params;
@@ -198,6 +246,10 @@ export const sendMessage = async (req, res) => {
       return res.status(403).json({ message: "접근 권한이 없습니다." });
     }
 
+    if (chat.closedBy.length >= 2) {
+      return res.status(403).json({ message: "종료된 거래입니다. 메시지를 보낼 수 없습니다." });
+    }
+
     const message = await Message.create({
       chat: chatId,
       sender: req.user._id,
@@ -207,7 +259,14 @@ export const sendMessage = async (req, res) => {
 
     const populated = await Message.findById(message._id).populate("sender", "name");
 
-    await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id });
+    // 새 메시지 발생 시, 채팅방을 나갔던 상대방 목록에 다시 노출
+    const recipientId = chat.buyer.toString() === req.user._id.toString()
+      ? chat.seller
+      : chat.buyer;
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: message._id,
+      $pull: { deletedBy: recipientId },
+    });
 
     const io = req.app.get("io");
     io.to(`chat:${chatId}`).emit("chat:message", {
