@@ -353,3 +353,56 @@ export const getCategories = (req, res) => {
     categories: CATEGORIES,
   });
 };
+
+// 카테고리별 시세 분석 — 거래 완료된 상품의 최종가 기준 통계
+export const getPriceStats = async (req, res) => {
+  try {
+    const category = req.query.category?.trim();
+    if (!category) {
+      return res.status(400).json({ message: "카테고리를 지정해주세요." });
+    }
+
+    const stats = await Product.aggregate([
+      {
+        $match: {
+          category,
+          $or: [
+            { saleType: "fixed", fixedStatus: "sold" },
+            { saleType: "auction", auctionStatus: "ended", winner: { $ne: null } },
+          ],
+        },
+      },
+      {
+        $project: {
+          price: {
+            $cond: [{ $eq: ["$saleType", "fixed"] }, "$fixedPrice", "$currentPrice"],
+          },
+        },
+      },
+      { $match: { price: { $gt: 0 } } },
+      {
+        $group: {
+          _id: null,
+          count: { $sum: 1 },
+          avg: { $avg: "$price" },
+          min: { $min: "$price" },
+          max: { $max: "$price" },
+        },
+      },
+    ]);
+
+    const result = stats[0]
+      ? {
+          count: stats[0].count,
+          avg: Math.round(stats[0].avg),
+          min: stats[0].min,
+          max: stats[0].max,
+        }
+      : { count: 0, avg: null, min: null, max: null };
+
+    return res.status(200).json({ category, ...result });
+  } catch (error) {
+    console.error("getPriceStats error:", error.message);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};

@@ -26,6 +26,21 @@ function CreateProductPage() {
   const [imageFiles, setImageFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [priceStats, setPriceStats] = useState(null);
+
+  // 카테고리 선택 시 해당 카테고리 시세 조회
+  useEffect(() => {
+    if (!form.category) {
+      setPriceStats(null);
+      return;
+    }
+    let cancelled = false;
+    axiosInstance
+      .get("/api/products/price-stats", { params: { category: form.category } })
+      .then((res) => { if (!cancelled) setPriceStats(res.data); })
+      .catch(() => { if (!cancelled) setPriceStats(null); });
+    return () => { cancelled = true; };
+  }, [form.category]);
 
   useEffect(() => {
     return () => { previewUrls.forEach((url) => URL.revokeObjectURL(url)); };
@@ -197,6 +212,26 @@ function CreateProductPage() {
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
+
+        {/* 카테고리 시세 안내 */}
+        {priceStats && (
+          priceStats.count > 0 ? (
+            <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-sm">
+              <p className="font-medium text-blue-700 mb-1">
+                💡 "{priceStats.category}" 최근 거래 시세 ({priceStats.count}건)
+              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-600">
+                <span>평균 <b className="text-slate-800">{priceStats.avg.toLocaleString()}원</b></span>
+                <span>최저 {priceStats.min.toLocaleString()}원</span>
+                <span>최고 {priceStats.max.toLocaleString()}원</span>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-slate-50 border border-slate-100 rounded-lg px-4 py-2.5 text-xs text-slate-400">
+              "{priceStats.category}" 카테고리의 거래 완료 내역이 아직 없어 시세 정보가 없습니다.
+            </div>
+          )
+        )}
 
         {/* 판매 방식별 가격 필드 */}
         {saleType === "fixed" ? (

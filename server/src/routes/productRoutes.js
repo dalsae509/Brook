@@ -7,6 +7,7 @@ import {
   updateProduct,
   deleteProduct,
   getCategories,
+  getPriceStats,
 } from "../controllers/productController.js";
 import {
   purchaseProduct,
@@ -18,6 +19,7 @@ import {
 const router = express.Router();
 
 router.get("/categories", getCategories);
+router.get("/price-stats", getPriceStats);
 router.get("/", getProducts);
 router.get("/:id", getProductDetail);
 router.post("/", authMiddleware, createProduct);
