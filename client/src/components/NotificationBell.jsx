@@ -9,9 +9,11 @@ const TYPE_LABELS = {
   outbid: "입찰 초과",
   wishlist_auction_started: "찜 경매 시작",
   trade_confirmed: "거래 완료",
+  trade_reminder: "거래 확인 요청",
   chat_created: "채팅방 생성",
   wanted_comment: "삽니다 댓글",
   wanted_chat_started: "채팅 요청",
+  report_processed: "신고 처리",
 };
 
 const TYPE_COLORS = {
@@ -20,9 +22,11 @@ const TYPE_COLORS = {
   outbid: "text-orange-500",
   wishlist_auction_started: "text-purple-600",
   trade_confirmed: "text-green-600",
+  trade_reminder: "text-amber-600",
   chat_created: "text-blue-600",
   wanted_comment: "text-orange-600",
   wanted_chat_started: "text-blue-600",
+  report_processed: "text-red-600",
 };
 
 function NotificationBell() {
