@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import axiosInstance from "../api/axios";
+import usePageTitle from "../hooks/usePageTitle";
 
 const PIE_COLORS = ["#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f87171", "#94a3b8"];
 
@@ -21,6 +22,7 @@ function StatCard({ label, value, accent }) {
 function DashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  usePageTitle("판매 통계");
 
   useEffect(() => {
     axiosInstance

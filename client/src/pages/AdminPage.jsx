@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import axiosInstance from "../api/axios";
+import usePageTitle from "../hooks/usePageTitle";
 
 const PIE_COLORS = ["#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f87171", "#94a3b8", "#f472b6", "#38bdf8"];
 
@@ -16,6 +17,7 @@ const STATUS_LABELS = {
 };
 
 function AdminPage() {
+  usePageTitle("관리자 대시보드");
   const [tab, setTab] = useState("analytics");
 
   const [users, setUsers] = useState([]);

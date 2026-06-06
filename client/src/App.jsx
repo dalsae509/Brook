@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
 import useAuthStore from "./store/authStore";
 import useNotificationStore from "./store/notificationStore";
 import socket from "./socket/socket";
@@ -70,6 +71,7 @@ function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+      <ErrorBoundary>
       <Suspense fallback={<div className="text-center py-20 text-slate-400">불러오는 중...</div>}>
       <Routes>
         <Route element={<MainLayout />}>
@@ -146,6 +148,7 @@ function App() {
         </Route>
       </Routes>
       </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

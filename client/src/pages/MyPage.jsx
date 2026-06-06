@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import axiosInstance from "../api/axios";
 import useAuthStore from "../store/authStore";
 import BrookScore from "../components/BrookScore";
+import usePageTitle from "../hooks/usePageTitle";
 
 const FIXED_STATUS_LABELS = { available: "판매중", reserved: "예약중", sold: "판매완료" };
 const AUCTION_STATUS_LABELS = { pending: "대기중", live: "진행중", ended: "종료됨" };
@@ -20,6 +21,7 @@ function getProductStatus(product) {
 
 function MyPage() {
   const { user, updateUser } = useAuthStore();
+  usePageTitle("마이페이지");
   const [myProducts, setMyProducts] = useState([]);
   const [myBids, setMyBids] = useState([]);
   const [myWins, setMyWins] = useState([]);

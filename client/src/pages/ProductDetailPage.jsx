@@ -8,6 +8,7 @@ import ReviewSection from "../components/ReviewSection";
 import { getBidUnit } from "../utils/bidUnit";
 import { CATEGORIES } from "../utils/categories";
 import { getCloudinaryUrl } from "../utils/cloudinary";
+import usePageTitle from "../hooks/usePageTitle";
 import ReportModal from "../components/ReportModal";
 
 const FIXED_STATUS_LABELS = { available: "판매중", reserved: "예약중", sold: "판매완료" };
@@ -32,6 +33,8 @@ function ProductDetailPage() {
   const [proxyInput, setProxyInput] = useState("");
   const [recommendations, setRecommendations] = useState([]);
   const [timeLeft, setTimeLeft] = useState("");
+
+  usePageTitle(product?.title);
   const [isEditing, setIsEditing] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [editForm, setEditForm] = useState({});
@@ -491,12 +494,14 @@ function ProductDetailPage() {
                   <>
                     <button
                       onClick={() => setSlideIndex((i) => (i - 1 + total) % total)}
+                      aria-label="이전 이미지"
                       className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center"
                     >
                       ‹
                     </button>
                     <button
                       onClick={() => setSlideIndex((i) => (i + 1) % total)}
+                      aria-label="다음 이미지"
                       className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center"
                     >
                       ›
