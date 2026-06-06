@@ -15,11 +15,14 @@ import reportRoutes from "./routes/reportRoutes.js";
 
 const app = express();
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => !isProduction,
   message: { message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
 });
 
@@ -28,6 +31,7 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => !isProduction,
   message: { message: "로그인/회원가입 시도가 너무 많습니다. 15분 후 다시 시도해주세요." },
 });
 
