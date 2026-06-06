@@ -92,6 +92,7 @@ function AdminPage() {
       setReportTotal(res.data.total || 0);
       setReportTotalPages(res.data.totalPages || 1);
     } catch (error) {
+      console.error("fetchReports error:", error);
       toast.error("신고 목록 불러오기 실패");
     } finally {
       setReportsLoading(false);

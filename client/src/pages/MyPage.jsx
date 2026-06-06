@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import axiosInstance from "../api/axios";
 import useAuthStore from "../store/authStore";
@@ -20,7 +20,6 @@ function getProductStatus(product) {
 
 function MyPage() {
   const { user, updateUser } = useAuthStore();
-  const navigate = useNavigate();
   const [myProducts, setMyProducts] = useState([]);
   const [myBids, setMyBids] = useState([]);
   const [myWins, setMyWins] = useState([]);
@@ -78,7 +77,7 @@ function MyPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, updateUser]);
 
   useEffect(() => {
     fetchMyPageData();

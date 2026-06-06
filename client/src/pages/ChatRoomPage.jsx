@@ -67,7 +67,7 @@ function ChatRoomPage() {
       socket.off("chat:message", handleMessage);
       socket.off("chat:read", handleRead);
     };
-  }, [chatId]);
+  }, [chatId, user.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

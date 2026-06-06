@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import Chat from "../models/Chat.js";
 import Message from "../models/Message.js";
 import Product from "../models/Product.js";

@@ -39,6 +39,12 @@ function ProductDetailPage() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [scheduleMode, setScheduleMode] = useState(false);
   const [scheduledStartInput, setScheduledStartInput] = useState("");
+  const [scheduleMinTime, setScheduleMinTime] = useState("");
+
+  const enableScheduleMode = () => {
+    setScheduleMinTime(new Date(Date.now() + 60000).toISOString().slice(0, 16));
+    setScheduleMode(true);
+  };
   const [scheduledDurationInput, setScheduledDurationInput] = useState(60);
 
   const isSeller = useMemo(() => {
@@ -73,14 +79,6 @@ function ProductDetailPage() {
     if (bidUnit == null || product?.currentPrice == null) return null;
     return product.currentPrice + bidUnit;
   }, [product, bidUnit]);
-
-  const isLive = useMemo(() => {
-    if (!product) return false;
-    return (
-      (product.saleType === "auction" && product.auctionStatus === "live") ||
-      (product.saleType === "fixed" && product.fixedStatus === "reserved")
-    );
-  }, [product]);
 
   const fetchProductDetail = useCallback(async () => {
     try {
@@ -182,12 +180,9 @@ function ProductDetailPage() {
     };
   }, [id]);
 
-  // 카운트다운
+  // 카운트다운 (남은 시간은 경매 진행 중일 때만 표시)
   useEffect(() => {
-    if (!product?.endTime || product.auctionStatus !== "live") {
-      setTimeLeft("");
-      return;
-    }
+    if (!product?.endTime || product.auctionStatus !== "live") return;
     const update = () => {
       const diff = new Date(product.endTime).getTime() - Date.now();
       if (diff <= 0) { setTimeLeft("00:00"); return; }
@@ -813,7 +808,7 @@ function ProductDetailPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setScheduleMode(true)}
+                          onClick={enableScheduleMode}
                           className={`flex-1 py-2 rounded-lg border text-sm font-medium transition ${
                             scheduleMode ? "bg-slate-800 text-white border-slate-800" : "text-slate-500 hover:border-slate-400"
                           }`}
@@ -838,7 +833,7 @@ function ProductDetailPage() {
                           type="datetime-local"
                           value={scheduledStartInput}
                           onChange={(e) => setScheduledStartInput(e.target.value)}
-                          min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                          min={scheduleMinTime}
                           className="w-full border rounded-lg px-4 py-3"
                         />
                       )}

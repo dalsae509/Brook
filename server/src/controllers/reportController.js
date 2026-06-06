@@ -105,7 +105,6 @@ export const processReport = async (req, res) => {
     if (!report) return res.status(404).json({ message: "신고를 찾을 수 없습니다." });
     if (report.status !== "pending") return res.status(400).json({ message: "이미 처리된 신고입니다." });
 
-    const prevStatus = report.status;
     const isConfirming = status === "reviewed";
 
     // 트랜잭션으로 상태 변경 + reportCount 동기화
@@ -137,15 +136,17 @@ export const processReport = async (req, res) => {
       recalculateBrookScore(report.reportedUser).catch(() => {});
     }
 
-    // 신고자에게 처리 결과 알림
-    const io = req.app.get("io");
-    const notifMessage = isConfirming
-      ? "신고가 확인되어 처리되었습니다. 감사합니다."
-      : "접수하신 신고가 검토 후 기각되었습니다.";
-    await createNotification(io, report.reporter._id, {
-      type: "report_processed",
-      message: notifMessage,
-    });
+    // 신고자에게 처리 결과 알림 (탈퇴한 신고자는 건너뜀)
+    if (report.reporter) {
+      const io = req.app.get("io");
+      const notifMessage = isConfirming
+        ? "신고가 확인되어 처리되었습니다. 감사합니다."
+        : "접수하신 신고가 검토 후 기각되었습니다.";
+      await createNotification(io, report.reporter._id, {
+        type: "report_processed",
+        message: notifMessage,
+      });
+    }
 
     return res.status(200).json({ message: "처리 완료", report });
   } catch (error) {
