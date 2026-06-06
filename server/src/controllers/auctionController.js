@@ -10,6 +10,8 @@ import {
 } from "../utils/auctionScheduler.js";
 import { getBidUnit } from "../utils/bidUnit.js";
 import { createNotification } from "../utils/notificationService.js";
+import { settleProxyBids } from "../utils/proxyBidUtil.js";
+import ProxyBid from "../models/ProxyBid.js";
 
 export const startAuction = async (req, res) => {
   try {
@@ -207,6 +209,9 @@ export const placeBid = async (req, res) => {
       endTime: updatedProduct.endTime,
     });
 
+    // 다른 입찰자의 자동 입찰(프록시)이 있으면 즉시 대리 입찰 정산
+    await settleProxyBids(updatedProduct._id, io);
+
     return res.status(201).json({
       message: "입찰 성공",
       bid: populatedBid,
@@ -214,6 +219,66 @@ export const placeBid = async (req, res) => {
     });
   } catch (error) {
     console.error("placeBid error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+// 자동 입찰(대리 입찰) 설정 — 최대 입찰가 지정
+export const setProxyBid = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const numericMax = Number(req.body.maxAmount);
+
+    if (Number.isNaN(numericMax) || numericMax <= 0) {
+      return res.status(400).json({ message: "최대 입찰가는 0보다 큰 숫자여야 합니다." });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
+    if (product.seller.toString() === req.user._id.toString()) {
+      return res.status(403).json({ message: "본인 상품에는 입찰할 수 없습니다." });
+    }
+    if (product.auctionStatus !== "live") {
+      return res.status(400).json({ message: "진행 중인 경매가 아닙니다." });
+    }
+
+    const unit = getBidUnit(product.currentPrice, product.bidTiers);
+    const minMax = product.currentPrice + unit;
+    if (numericMax < minMax) {
+      return res.status(400).json({
+        message: `최대 입찰가는 현재가 + 입찰 단위 이상이어야 합니다. (최소 ${minMax.toLocaleString()}원)`,
+      });
+    }
+
+    await ProxyBid.findOneAndUpdate(
+      { product: productId, bidder: req.user._id },
+      { $set: { maxAmount: numericMax } },
+      { upsert: true, new: true }
+    );
+
+    const io = req.app.get("io");
+    await settleProxyBids(productId, io);
+
+    const updated = await Product.findById(productId);
+    return res.status(200).json({
+      message: "자동 입찰이 설정되었습니다.",
+      maxAmount: numericMax,
+      currentPrice: updated.currentPrice,
+    });
+  } catch (error) {
+    console.error("setProxyBid error:", error);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+// 현재 사용자의 자동 입찰 설정 조회
+export const getMyProxyBid = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const proxy = await ProxyBid.findOne({ product: productId, bidder: req.user._id });
+    return res.status(200).json({ maxAmount: proxy?.maxAmount ?? null });
+  } catch (error) {
+    console.error("getMyProxyBid error:", error);
     return res.status(500).json({ message: "서버 오류" });
   }
 };

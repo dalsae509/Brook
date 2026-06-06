@@ -28,6 +28,8 @@ function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [durationMinutes, setDurationMinutes] = useState(5);
   const [bidAmount, setBidAmount] = useState("");
+  const [proxyMax, setProxyMax] = useState(null);
+  const [proxyInput, setProxyInput] = useState("");
   const [timeLeft, setTimeLeft] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -122,6 +124,15 @@ function ProductDetailPage() {
       .catch(() => {});
   }, [user, id]);
 
+  // 라이브 경매에서 내 자동 입찰 설정값 조회
+  useEffect(() => {
+    if (!user || product?.saleType !== "auction" || product?.auctionStatus !== "live") return;
+    axiosInstance
+      .get(`/api/auctions/${id}/auto-bid`)
+      .then((res) => setProxyMax(res.data.maxAmount))
+      .catch(() => {});
+  }, [user, id, product?.saleType, product?.auctionStatus]);
+
   const handleToggleWishlist = async () => {
     try {
       const res = await axiosInstance.post(`/api/users/me/wishlist/${id}`);
@@ -211,6 +222,28 @@ function ProductDetailPage() {
     } catch (error) {
       toast.error(error.response?.data?.message || "입찰 실패");
     }
+  };
+
+  const submitProxyBid = async (maxAmount) => {
+    try {
+      const res = await axiosInstance.post(`/api/auctions/${id}/auto-bid`, { maxAmount: Number(maxAmount) });
+      setProxyMax(res.data.maxAmount);
+      setProxyInput("");
+      toast.success("자동 입찰이 설정되었습니다.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "자동 입찰 설정 실패");
+    }
+  };
+
+  const handleSetProxyBid = () => submitProxyBid(proxyInput);
+
+  const handleMobileProxy = () => {
+    const input = window.prompt(
+      proxyMax != null
+        ? `현재 자동 입찰 최대가: ${proxyMax.toLocaleString()}원\n새 최대 입찰가를 입력하세요`
+        : "자동 입찰 최대가를 입력하세요 (이 금액까지 자동으로 대신 입찰)"
+    );
+    if (input) submitProxyBid(input);
   };
 
   const handleEndAuction = async () => {
@@ -885,6 +918,38 @@ function ProductDetailPage() {
                   >
                     입찰하기
                   </button>
+
+                  {/* 자동 입찰 (proxy bidding) */}
+                  <div className="border-t pt-3 mt-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-slate-700">🤖 자동 입찰</p>
+                      {proxyMax != null && (
+                        <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                          최대 {proxyMax.toLocaleString()}원 설정됨
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      최대 금액만 정하면, 다른 입찰이 들어올 때 한 단위씩만 자동으로 대신 입찰합니다.
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={proxyInput}
+                        onChange={(e) => setProxyInput(e.target.value)}
+                        className="flex-1 border rounded-lg px-4 py-2.5 text-sm"
+                        placeholder="최대 입찰가"
+                        min={minBidAmount ?? 0}
+                      />
+                      <button
+                        onClick={handleSetProxyBid}
+                        disabled={!proxyInput}
+                        className="bg-slate-800 text-white px-4 py-2.5 rounded-lg text-sm hover:bg-slate-700 disabled:opacity-40 shrink-0"
+                      >
+                        {proxyMax != null ? "수정" : "설정"}
+                      </button>
+                    </div>
+                  </div>
                 </>
               )}
               {isSeller && product.auctionStatus === "live" && (
@@ -1006,20 +1071,25 @@ function ProductDetailPage() {
         ) : (
           <div>
             {!isSeller && product.auctionStatus === "live" && (
-              <div className="flex gap-2 items-center">
-                <div className="shrink-0">
-                  <p className="text-xs text-slate-400">현재가</p>
-                  <p className="font-bold text-slate-800 text-sm">{product.currentPrice?.toLocaleString()}원</p>
+              <div className="space-y-1.5">
+                <div className="flex gap-2 items-center">
+                  <div className="shrink-0">
+                    <p className="text-xs text-slate-400">현재가</p>
+                    <p className="font-bold text-slate-800 text-sm">{product.currentPrice?.toLocaleString()}원</p>
+                  </div>
+                  <input
+                    type="number"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    placeholder={minBidAmount != null ? `최소 ${minBidAmount.toLocaleString()}원` : "입찰 금액"}
+                    className="flex-1 border rounded-xl px-3 py-2.5 text-sm min-w-0"
+                  />
+                  <button onClick={handleBid} className="bg-purple-600 text-white px-4 py-2.5 rounded-xl font-medium text-sm shrink-0 hover:bg-purple-700">
+                    입찰
+                  </button>
                 </div>
-                <input
-                  type="number"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  placeholder={minBidAmount != null ? `최소 ${minBidAmount.toLocaleString()}원` : "입찰 금액"}
-                  className="flex-1 border rounded-xl px-3 py-2.5 text-sm min-w-0"
-                />
-                <button onClick={handleBid} className="bg-purple-600 text-white px-4 py-2.5 rounded-xl font-medium text-sm shrink-0 hover:bg-purple-700">
-                  입찰
+                <button onClick={handleMobileProxy} className="text-xs text-slate-500 hover:text-purple-600">
+                  🤖 자동 입찰 {proxyMax != null ? `(최대 ${proxyMax.toLocaleString()}원)` : "설정"}
                 </button>
               </div>
             )}

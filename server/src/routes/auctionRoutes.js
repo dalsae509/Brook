@@ -8,6 +8,8 @@ import {
   placeBid,
   getBids,
   endAuction,
+  setProxyBid,
+  getMyProxyBid,
 } from "../controllers/auctionController.js";
 
 const router = express.Router();
@@ -24,6 +26,8 @@ router.post("/:productId/start", authMiddleware, startAuction);
 router.post("/:productId/schedule", authMiddleware, scheduleAuction);
 router.delete("/:productId/schedule", authMiddleware, cancelAuctionSchedule);
 router.post("/:productId/bid", authMiddleware, bidLimiter, placeBid);
+router.post("/:productId/auto-bid", authMiddleware, bidLimiter, setProxyBid);
+router.get("/:productId/auto-bid", authMiddleware, getMyProxyBid);
 router.get("/:productId/bids", authMiddleware, getBids);
 router.post("/:productId/end", authMiddleware, endAuction);
 

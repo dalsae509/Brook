@@ -2,6 +2,7 @@ import Product from "../models/Product.js";
 import User from "../models/User.js";
 import Chat from "../models/Chat.js";
 import Bid from "../models/Bid.js";
+import ProxyBid from "../models/ProxyBid.js";
 import { validateBidTiers, getBidUnit } from "../utils/bidUnit.js";
 import { CATEGORIES } from "../config/categories.js";
 
@@ -334,6 +335,7 @@ export const deleteProduct = async (req, res) => {
       User.updateMany({ wishlist: id }, { $pull: { wishlist: id } }),
       Chat.deleteMany({ product: id }),
       Bid.deleteMany({ product: id }),
+      ProxyBid.deleteMany({ product: id }),
     ]);
 
     return res.status(200).json({
