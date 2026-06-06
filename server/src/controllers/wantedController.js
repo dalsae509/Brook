@@ -143,7 +143,10 @@ export const deletePost = async (req, res) => {
     if (post.author.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "권한이 없습니다." });
 
-    await WantedComment.deleteMany({ wantedPost: post._id });
+    await Promise.all([
+      WantedComment.deleteMany({ wantedPost: post._id }),
+      Chat.deleteMany({ wantedPost: post._id }),
+    ]);
     await post.deleteOne();
     res.json({ message: "삭제 완료" });
   } catch (error) {

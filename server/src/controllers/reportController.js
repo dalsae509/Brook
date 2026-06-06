@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import Report from "../models/Report.js";
 import User from "../models/User.js";
 import { recalculateBrookScore } from "../utils/brookScoreUtil.js";
@@ -106,31 +105,10 @@ export const processReport = async (req, res) => {
 
     const isConfirming = status === "reviewed";
 
-    // 트랜잭션으로 상태 변경 + reportCount 동기화
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    try {
-      report.status = status;
-      await report.save({ session });
+    report.status = status;
+    await report.save();
 
-      if (isConfirming) {
-        await User.findByIdAndUpdate(
-          report.reportedUser,
-          { $inc: { reportCount: 1 } },
-          { session }
-        );
-      }
-
-      await session.commitTransaction();
-    } catch (txError) {
-      await session.abortTransaction();
-      console.error("processReport transaction error:", txError.message);
-      return res.status(500).json({ message: "서버 오류" });
-    } finally {
-      session.endSession();
-    }
-
-    // 브룩 지수 재계산 (트랜잭션 밖)
+    // 확인된 신고는 브룩 지수에 반영 (점수는 Report 컬렉션을 직접 집계하므로 별도 카운터 불필요)
     if (isConfirming) {
       recalculateBrookScore(report.reportedUser).catch(() => {});
     }

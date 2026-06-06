@@ -38,7 +38,6 @@ const userSchema = new mongoose.Schema(
     completedDeals: { type: Number, default: 0, min: 0 },
     totalDeals: { type: Number, default: 0, min: 0 },
     cancelledDeals: { type: Number, default: 0, min: 0 },
-    reportCount: { type: Number, default: 0, min: 0 },
   },
   {
     timestamps: true,
