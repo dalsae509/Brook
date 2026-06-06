@@ -37,10 +37,17 @@ function NotificationBell() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axiosInstance
-      .get("/api/notifications")
-      .then((res) => setNotifications(res.data.notifications))
-      .catch(() => {});
+    const fetchNotifications = () => {
+      axiosInstance
+        .get("/api/notifications")
+        .then((res) => setNotifications(res.data.notifications))
+        .catch(() => {});
+    };
+
+    fetchNotifications();
+    // 탭에 다시 포커스가 오면 갱신 (오프라인 중 쌓인 알림 반영)
+    window.addEventListener("focus", fetchNotifications);
+    return () => window.removeEventListener("focus", fetchNotifications);
   }, [setNotifications]);
 
   useEffect(() => {
