@@ -744,12 +744,12 @@ function ProductDetailPage() {
                   구매하기
                 </button>
               )}
-              {isSeller && product.fixedStatus === "reserved" && (
+              {(isSeller || isBuyer) && product.fixedStatus === "reserved" && (
                 <button
                   onClick={handleConfirmTrade}
                   className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700"
                 >
-                  거래 완료
+                  {isSeller ? "거래 완료" : "거래 완료(수령 확인)"}
                 </button>
               )}
               {(isSeller || isBuyer) && product.fixedStatus === "reserved" && (
@@ -903,8 +903,15 @@ function ProductDetailPage() {
                   >
                     채팅방으로 이동
                   </button>
-                  {product.auctionTradeConfirmed && (
+                  {product.auctionTradeConfirmed ? (
                     <p className="text-center text-green-600 font-medium text-sm">거래가 완료되었습니다.</p>
+                  ) : (
+                    <button
+                      onClick={handleConfirmAuctionTrade}
+                      className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700"
+                    >
+                      거래 완료(수령 확인)
+                    </button>
                   )}
                 </>
               )}
@@ -987,9 +994,9 @@ function ProductDetailPage() {
                 채팅방으로 이동
               </button>
             )}
-            {isSeller && product.fixedStatus === "reserved" && (
+            {(isSeller || isBuyer) && product.fixedStatus === "reserved" && (
               <button onClick={handleConfirmTrade} className="bg-green-600 text-white px-6 py-3 rounded-xl font-medium">
-                거래 완료
+                {isSeller ? "거래 완료" : "거래 완료(수령 확인)"}
               </button>
             )}
             {product.fixedStatus === "sold" && (
@@ -1033,9 +1040,16 @@ function ProductDetailPage() {
               </button>
             )}
             {isWinner && product.auctionStatus === "ended" && (
-              <button onClick={handleOpenChat} className="w-full bg-slate-800 text-white py-3 rounded-xl font-medium hover:bg-slate-700">
-                채팅방으로 이동
-              </button>
+              <div className="flex gap-2">
+                <button onClick={handleOpenChat} className="flex-1 bg-slate-800 text-white py-3 rounded-xl font-medium text-sm hover:bg-slate-700">
+                  채팅방으로 이동
+                </button>
+                {!product.auctionTradeConfirmed && (
+                  <button onClick={handleConfirmAuctionTrade} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-green-700">
+                    거래 완료(수령 확인)
+                  </button>
+                )}
+              </div>
             )}
             {isSeller && product.auctionStatus === "ended" && product.winner && !product.auctionTradeConfirmed && (
               <div className="flex gap-2">

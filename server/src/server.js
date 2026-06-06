@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { Server } from "socket.io";
 import app from "./app.js";
 import { restoreAuctionTimers, restoreAuctionStartTimers, getAuctionRoom } from "./utils/auctionScheduler.js";
+import { startTradeReminderSweep } from "./utils/tradeReminderScheduler.js";
 
 dotenv.config();
 
@@ -83,6 +84,7 @@ mongoose
     console.log("MongoDB connected");
     await restoreAuctionTimers(io);
     await restoreAuctionStartTimers(io);
+    startTradeReminderSweep(io);
   })
   .catch((error) => {
     console.error("MongoDB connection error:", error.message);

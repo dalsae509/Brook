@@ -97,6 +97,14 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    reservedAt: {
+      type: Date,
+      default: null,
+    },
+    tradeReminderSentAt: {
+      type: Date,
+      default: null,
+    },
     views: {
       type: Number,
       default: 0,
