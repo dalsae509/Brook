@@ -101,6 +101,10 @@ const productSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    soldAt: {
+      type: Date,
+      default: null,
+    },
     tradeReminderSentAt: {
       type: Date,
       default: null,

@@ -14,6 +14,7 @@ const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const CreateProductPage = lazy(() => import("./pages/CreateProductPage"));
 const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage"));
 const MyPage = lazy(() => import("./pages/MyPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const ChatListPage = lazy(() => import("./pages/ChatListPage"));
 const ChatRoomPage = lazy(() => import("./pages/ChatRoomPage"));
 const SellerProfilePage = lazy(() => import("./pages/SellerProfilePage"));
@@ -102,6 +103,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <MyPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
               </ProtectedRoute>
             }
           />

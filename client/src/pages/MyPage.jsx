@@ -108,7 +108,15 @@ function MyPage() {
   return (
     <div className="space-y-10">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <h1 className="text-2xl sm:text-3xl font-bold">마이페이지</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl sm:text-3xl font-bold">마이페이지</h1>
+          <Link
+            to="/dashboard"
+            className="text-sm bg-slate-800 text-white px-3 py-1.5 rounded-lg hover:bg-slate-700"
+          >
+            📊 판매 통계
+          </Link>
+        </div>
         <div className="bg-white rounded-2xl shadow px-5 py-4 min-w-[200px]">
           <BrookScore
             score={user?.brookScore ?? 36.5}

@@ -84,7 +84,7 @@ export const confirmTrade = async (req, res) => {
     try {
       product = await Product.findOneAndUpdate(
         { _id: id, fixedStatus: "reserved" },
-        { $set: { fixedStatus: "sold" } },
+        { $set: { fixedStatus: "sold", soldAt: new Date() } },
         { new: true, session }
       );
 
@@ -142,6 +142,7 @@ export const confirmAuctionTrade = async (req, res) => {
       return res.status(400).json({ message: "이미 거래 완료된 상품입니다." });
 
     product.auctionTradeConfirmed = true;
+    product.soldAt = new Date();
     await product.save();
 
     // 거래 완료를 처리하지 않은 상대방에게 알림

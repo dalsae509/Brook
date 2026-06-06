@@ -138,3 +138,96 @@ export const getMyWishlist = async (req, res) => {
     return res.status(500).json({ message: "서버 오류" });
   }
 };
+
+// 판매자 통계 대시보드 — 요약/상태분포/월별 매출/인기 상품
+export const getSellerDashboard = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+
+    const [facet] = await Product.aggregate([
+      { $match: { seller: sellerId } },
+      {
+        $addFields: {
+          isSold: {
+            $or: [
+              { $and: [{ $eq: ["$saleType", "fixed"] }, { $eq: ["$fixedStatus", "sold"] }] },
+              { $and: [{ $eq: ["$saleType", "auction"] }, { $eq: ["$auctionTradeConfirmed", true] }] },
+            ],
+          },
+          isActive: {
+            $or: [
+              { $and: [{ $eq: ["$saleType", "fixed"] }, { $in: ["$fixedStatus", ["available", "reserved"]] }] },
+              { $and: [{ $eq: ["$saleType", "auction"] }, { $in: ["$auctionStatus", ["pending", "live"]] }] },
+            ],
+          },
+          soldPrice: { $cond: [{ $eq: ["$saleType", "fixed"] }, "$fixedPrice", "$currentPrice"] },
+        },
+      },
+      {
+        $facet: {
+          summary: [
+            {
+              $group: {
+                _id: null,
+                totalProducts: { $sum: 1 },
+                totalViews: { $sum: "$views" },
+                activeListings: { $sum: { $cond: ["$isActive", 1, 0] } },
+                soldCount: { $sum: { $cond: ["$isSold", 1, 0] } },
+                totalRevenue: { $sum: { $cond: ["$isSold", "$soldPrice", 0] } },
+              },
+            },
+          ],
+          statusBreakdown: [
+            { $group: { _id: { saleType: "$saleType", fixedStatus: "$fixedStatus", auctionStatus: "$auctionStatus" }, count: { $sum: 1 } } },
+          ],
+          salesByMonth: [
+            { $match: { isSold: true, soldAt: { $ne: null } } },
+            {
+              $group: {
+                _id: { year: { $year: "$soldAt" }, month: { $month: "$soldAt" } },
+                count: { $sum: 1 },
+                revenue: { $sum: "$soldPrice" },
+              },
+            },
+            { $sort: { "_id.year": 1, "_id.month": 1 } },
+          ],
+          topViewed: [
+            { $sort: { views: -1 } },
+            { $limit: 5 },
+            { $project: { _id: 1, title: 1, views: 1, saleType: 1 } },
+          ],
+        },
+      },
+    ]);
+
+    const summary = facet.summary[0] ?? {
+      totalProducts: 0, totalViews: 0, activeListings: 0, soldCount: 0, totalRevenue: 0,
+    };
+
+    // 상태 분포를 사람이 읽기 쉬운 라벨로 변환
+    const statusLabels = { available: "판매중", reserved: "예약중", sold: "판매완료", pending: "경매대기", live: "경매중", ended: "경매종료" };
+    const statusCounts = {};
+    for (const row of facet.statusBreakdown) {
+      const key = row._id.saleType === "fixed" ? row._id.fixedStatus : row._id.auctionStatus;
+      const label = statusLabels[key] ?? "기타";
+      statusCounts[label] = (statusCounts[label] ?? 0) + row.count;
+    }
+    const statusBreakdown = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+
+    const salesByMonth = facet.salesByMonth.map((r) => ({
+      month: `${r._id.year}-${String(r._id.month).padStart(2, "0")}`,
+      count: r.count,
+      revenue: r.revenue,
+    }));
+
+    return res.status(200).json({
+      summary: { ...summary, _id: undefined },
+      statusBreakdown,
+      salesByMonth,
+      topViewed: facet.topViewed,
+    });
+  } catch (error) {
+    console.error("getSellerDashboard error:", error.message);
+    return res.status(500).json({ message: "서버 오류" });
+  }
+};
