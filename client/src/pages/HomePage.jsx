@@ -175,10 +175,32 @@ function HomePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl sm:text-3xl font-bold">상품 목록</h1>
+      {/* 히어로 */}
+      <section className="rounded-3xl bg-gradient-to-br from-slate-800 to-slate-600 text-white px-6 py-10 sm:px-10 sm:py-14">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-3 leading-snug">
+          믿고 거래하는 중고 마켓, <span className="text-amber-300">Brook</span>
+        </h1>
+        <p className="text-slate-200 mb-6 text-sm sm:text-base">
+          실시간 경매부터 즉시 구매까지 — 신뢰도 지표 '브룩 지수'로 안심하고 거래하세요.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/products/new" className="bg-white text-slate-800 px-5 py-2.5 rounded-xl font-medium hover:bg-slate-100 transition">
+            상품 등록하기
+          </Link>
+          <a href="#products" className="border border-white/40 px-5 py-2.5 rounded-xl font-medium hover:bg-white/10 transition">
+            상품 둘러보기
+          </a>
+        </div>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 mt-8 text-xs sm:text-sm text-slate-200">
+          <span>⚡ 실시간 경매</span>
+          <span>🛍️ 즉시 구매</span>
+          <span>🤝 신뢰도 브룩 지수</span>
+          <span>💬 1:1 실시간 채팅</span>
+        </div>
+      </section>
 
       {/* 탭 */}
-      <div className="flex gap-2 flex-wrap">
+      <div id="products" className="flex gap-2 flex-wrap scroll-mt-20">
         {[
           { key: "all", label: "전체" },
           { key: "fixed", label: "즉시 판매" },
