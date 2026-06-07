@@ -182,7 +182,7 @@ function WantedListPage() {
                     </p>
                   )}
                   <p className="text-xs text-slate-400 mt-1">
-                    {post.author.name}
+                    {post.author?.name ?? "탈퇴한 사용자"}
                   </p>
                   <p className="text-xs text-slate-400">
                     {new Date(post.createdAt).toLocaleDateString()}

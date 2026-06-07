@@ -134,7 +134,7 @@ function WantedDetailPage() {
     }
   };
 
-  const isAuthor = user && post?.author._id === user.id;
+  const isAuthor = user && post?.author?._id === user.id;
 
   if (loading) return (
     <div className="max-w-2xl mx-auto space-y-4 animate-pulse">
@@ -221,8 +221,8 @@ function WantedDetailPage() {
 
             <div className="flex items-center justify-between text-sm text-slate-400 pt-3 border-t">
               <div className="flex items-center gap-2">
-                <span>{post.author.name}</span>
-                {user && !isAuthor && (
+                <span>{post.author?.name ?? "탈퇴한 사용자"}</span>
+                {user && !isAuthor && post.author && (
                   <button
                     onClick={() => setReportTarget({ userId: post.author._id, userName: post.author.name })}
                     className="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-0.5 rounded-lg"
@@ -259,7 +259,7 @@ function WantedDetailPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm">{comment.author.name}</span>
+                      <span className="font-medium text-sm">{comment.author?.name ?? "탈퇴한 사용자"}</span>
                       {chattedSellerIds.has(comment.author._id) && (
                         <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">채팅 중</span>
                       )}
@@ -285,7 +285,7 @@ function WantedDetailPage() {
                         </button>
                       )
                     )}
-                    {user && comment.author._id !== user.id && (
+                    {user && comment.author && comment.author._id !== user.id && (
                       <button
                         onClick={() => setReportTarget({ userId: comment.author._id, userName: comment.author.name })}
                         className="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-1 rounded-lg"

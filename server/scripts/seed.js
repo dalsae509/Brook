@@ -12,6 +12,12 @@ import Bid from "../src/models/Bid.js";
 import ProxyBid from "../src/models/ProxyBid.js";
 import Review from "../src/models/Review.js";
 import SearchKeyword from "../src/models/SearchKeyword.js";
+import Chat from "../src/models/Chat.js";
+import Message from "../src/models/Message.js";
+import Notification from "../src/models/Notification.js";
+import Report from "../src/models/Report.js";
+import WantedPost from "../src/models/WantedPost.js";
+import WantedComment from "../src/models/WantedComment.js";
 import { CATEGORIES } from "../src/config/categories.js";
 import { recalculateBrookScore } from "../src/utils/brookScoreUtil.js";
 
@@ -77,6 +83,8 @@ async function seed() {
   await Promise.all([
     User.deleteMany({}), Product.deleteMany({}), Bid.deleteMany({}),
     ProxyBid.deleteMany({}), Review.deleteMany({}), SearchKeyword.deleteMany({}),
+    Chat.deleteMany({}), Message.deleteMany({}), Notification.deleteMany({}),
+    Report.deleteMany({}), WantedPost.deleteMany({}), WantedComment.deleteMany({}),
   ]);
 
   const hash = await bcrypt.hash("Brook1234", 10);
@@ -216,6 +224,34 @@ async function seed() {
   // 인기 검색어
   await SearchKeyword.insertMany(POPULAR_KEYWORDS.map(([keyword, count]) => ({ keyword, count })));
   console.log(`인기 검색어 ${POPULAR_KEYWORDS.length}개 생성`);
+
+  // 삽니다(Wanted) 게시글 + 댓글
+  const WANTED = [
+    ["아이폰 14 프로 구해요", "디지털/전자기기", 900000],
+    ["입문용 DSLR 카메라 삽니다", "디지털/전자기기", 300000],
+    ["캠핑 의자 2개 구합니다", "스포츠/레저", 50000],
+    ["원목 책상 구해요 (서울)", "가구/인테리어", 80000],
+    ["나이키 운동화 270mm 찾아요", "의류/패션", 60000],
+    ["프로그래밍 책 일괄 구매", "도서/음반", 40000],
+  ];
+  const wantedDocs = WANTED.map(([title, category, targetPrice]) => ({
+    author: pick(buyerPool)._id, title,
+    description: `${title}. 상태 좋은 물건 연락 주세요.`,
+    category, targetPrice, status: "open",
+    createdAt: daysAgo(rand(1, 30)),
+  }));
+  const wantedCreated = await WantedPost.insertMany(wantedDocs);
+  const wantedComments = [];
+  for (const wp of wantedCreated) {
+    for (let i = 0; i < rand(0, 3); i++) {
+      wantedComments.push({
+        wantedPost: wp._id, author: pick(buyerPool)._id,
+        content: pick(["저 팔아요! 채팅 주세요.", "비슷한 거 있어요.", "가격 조정 가능할까요?"]),
+      });
+    }
+  }
+  await WantedComment.insertMany(wantedComments);
+  console.log(`삽니다 ${wantedCreated.length}건, 댓글 ${wantedComments.length}건 생성`);
 
   // 브룩 지수 재계산
   console.log("브룩 지수 재계산 중...");
