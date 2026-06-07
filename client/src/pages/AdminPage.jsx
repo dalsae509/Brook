@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, Legend,
 } from "recharts";
 import axiosInstance from "../api/axios";
 import usePageTitle from "../hooks/usePageTitle";
@@ -287,17 +286,20 @@ function AdminPage() {
                 {analytics.categoryDistribution.length === 0 ? (
                   <p className="text-slate-400 text-sm py-10 text-center">데이터가 없습니다.</p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <PieChart>
-                      <Pie data={analytics.categoryDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}>
-                        {analytics.categoryDistribution.map((entry, i) => (
-                          <Cell key={entry.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v) => `${v}개`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="space-y-2.5 py-2">
+                    {(() => {
+                      const max = Math.max(...analytics.categoryDistribution.map((c) => c.value), 1);
+                      return analytics.categoryDistribution.map((c, i) => (
+                        <div key={c.name} className="flex items-center gap-3 text-sm">
+                          <span className="w-24 shrink-0 truncate text-slate-600">{c.name}</span>
+                          <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${(c.value / max) * 100}%`, backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                          </div>
+                          <span className="w-10 shrink-0 text-right text-slate-500">{c.value}개</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
                 )}
               </div>
             </div>
