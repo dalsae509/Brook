@@ -12,7 +12,9 @@
 - [주요 기능](#주요-기능)
 - [기술 스택](#기술-스택)
 - [시스템 아키텍처](#시스템-아키텍처)
+- [데이터 모델 (ERD)](#데이터-모델-erd)
 - [핵심 구현 사항](#핵심-구현-사항)
+- [기술적 의사결정 & 트레이드오프](#기술적-의사결정--트레이드오프)
 - [트러블슈팅](#트러블슈팅)
 - [환경 변수 설정](#환경-변수-설정)
 - [실행 방법](#실행-방법)
@@ -223,6 +225,120 @@ Refresh Token으로 /api/auth/refresh 호출 → 새 토큰 저장
 
 ---
 
+## 데이터 모델 (ERD)
+
+```mermaid
+erDiagram
+    USER ||--o{ PRODUCT : "판매(seller)"
+    USER ||--o{ BID : "입찰"
+    USER ||--o{ PROXYBID : "자동입찰"
+    USER ||--o{ REVIEW : "작성/대상"
+    USER ||--o{ REPORT : "신고/피신고"
+    USER ||--o{ WANTEDPOST : "작성"
+    USER ||--o{ WANTEDCOMMENT : "댓글"
+    USER ||--o{ NOTIFICATION : "수신"
+    USER ||--o{ MESSAGE : "발신"
+    PRODUCT ||--o{ BID : "입찰 대상"
+    PRODUCT ||--o{ PROXYBID : "자동입찰 대상"
+    PRODUCT ||--o{ REVIEW : "후기 대상"
+    PRODUCT ||--o{ CHAT : "거래 채팅"
+    WANTEDPOST ||--o{ WANTEDCOMMENT : "댓글"
+    WANTEDPOST ||--o{ CHAT : "삽니다 채팅"
+    CHAT ||--o{ MESSAGE : "메시지"
+
+    USER {
+        ObjectId _id
+        string name
+        string email UK
+        string password
+        string role "user|admin"
+        float brookScore "신뢰도 0~99"
+        int completedDeals
+        int cancelledDeals
+        ObjectId[] wishlist FK
+        string[] refreshTokens "멀티 디바이스"
+    }
+    PRODUCT {
+        ObjectId seller FK
+        string title
+        string category
+        string saleType "fixed|auction"
+        int fixedPrice
+        string fixedStatus "available|reserved|sold"
+        ObjectId buyer FK
+        int currentPrice
+        string auctionStatus "pending|live|ended"
+        ObjectId winner FK
+        bool auctionTradeConfirmed
+        int views
+        date soldAt
+    }
+    BID {
+        ObjectId product FK
+        ObjectId bidder FK
+        int amount
+    }
+    PROXYBID {
+        ObjectId product FK
+        ObjectId bidder FK
+        int maxAmount "자동입찰 상한"
+    }
+    CHAT {
+        ObjectId product FK
+        ObjectId wantedPost FK
+        ObjectId buyer FK
+        ObjectId seller FK
+        ObjectId[] deletedBy FK "나가기"
+        ObjectId[] closedBy FK "거래 종료"
+    }
+    MESSAGE {
+        ObjectId chat FK
+        ObjectId sender FK
+        string content
+        string imageUrl
+        bool isRead
+    }
+    REVIEW {
+        ObjectId product FK
+        ObjectId reviewer FK
+        ObjectId reviewee FK
+        int rating "1~5"
+        string comment
+    }
+    REPORT {
+        ObjectId reporter FK
+        ObjectId reportedUser FK
+        string reason
+        string status "pending|reviewed|dismissed"
+    }
+    NOTIFICATION {
+        ObjectId user FK
+        string type
+        string message
+        bool isRead
+    }
+    WANTEDPOST {
+        ObjectId author FK
+        string title
+        string category
+        int targetPrice
+        string status "open|closed"
+    }
+    WANTEDCOMMENT {
+        ObjectId wantedPost FK
+        ObjectId author FK
+        string content
+    }
+    SEARCHKEYWORD {
+        string keyword UK
+        int count
+    }
+```
+
+> MongoDB(문서형)이므로 엄밀한 외래키 제약은 없지만, `ref` 기반 참조 관계를 ERD로 표현했습니다. 일부 관계(찜·deletedBy·closedBy)는 배열 참조입니다.
+
+---
+
 ## 핵심 구현 사항
 
 ### 1. 동시 입찰 레이스 컨디션 방지
@@ -314,6 +430,52 @@ const newPrice = Math.min(winnerMax, second.max + unit);
 ### 10. 테스트 & 빌드 게이트
 
 `node:test` + `supertest` + `mongodb-memory-server`(레플리카셋, 트랜잭션 지원)로 인증·거래 완료·자동 입찰·채팅·브룩 지수·신고·시세·대시보드·검색·추천 등 핵심 플로우를 **41개** 테스트로 검증합니다 (`npm run test:coverage`로 커버리지 측정). GitHub Actions가 push/PR마다 클라이언트 lint·build와 서버 테스트·문법 검사를 실행해, 깨진 코드가 배포되는 것을 차단합니다.
+
+---
+
+## 기술적 의사결정 & 트레이드오프
+
+### 자동 입찰을 외부 라이브러리 없이 직접 구현
+
+**결정**: eBay식 proxy bidding(2등 최대가 + 한 단위 정산)을 `settleProxyBids` 정산 함수로 직접 구현.
+**이유**: 입찰 도메인 로직은 비즈니스 핵심이라 외부 의존성에 묶이기보다 직접 제어하는 게 명확하고, 입찰 단위(`bidTiers`)·동시성 등 우리 규칙과 맞물려야 했습니다.
+**트레이드오프**: 직접 구현해 정산/동시성 엣지 케이스를 직접 책임져야 함 → 단위 테스트(단독 선점·수동 대응·2자 경쟁)로 보완.
+
+### 토큰을 localStorage에 저장 (vs httpOnly 쿠키)
+
+**결정**: Access/Refresh 토큰을 localStorage에 저장하고 Axios 인터셉터로 헤더 주입.
+**이유**: 프론트(Vercel)·백엔드(Render) 도메인이 달라 크로스 사이트 쿠키 설정이 복잡하고, CSRF 방어라는 새 과제가 생깁니다. JSX 자동 이스케이프 + HTML 직접 렌더 부재로 XSS 표면이 작고, Access 토큰 수명을 15분으로 짧게 둬 위험을 완화.
+**트레이드오프**: XSS가 발생하면 토큰 탈취 위험. 운영 트래픽이 큰 서비스라면 Refresh 토큰을 httpOnly 쿠키로 옮기는 것이 정석.
+
+### 신뢰도(브룩 지수)를 Report 컬렉션에서 직접 집계
+
+**결정**: 신고 패널티를 `user.reportCount` 같은 비정규화 카운터 대신 `Report.countDocuments({ status: "reviewed" })`로 매 계산 시 집계.
+**이유**: 카운터를 따로 두면 상태 변경 시 동기화가 깨질 수 있어, **단일 진실 소스(Report 컬렉션)**로 통일.
+**트레이드오프**: 계산 시 집계 쿼리 1회 추가. 신뢰도 재계산은 빈번하지 않아 비용보다 정합성 이점이 큼.
+
+### 대시보드 통계를 `$facet` 단일 쿼리로
+
+**결정**: 요약·상태 분포·월별 매출·인기 상품을 `$facet`으로 한 번에 집계.
+**이유**: 라운드트립을 줄이고, `$addFields`로 판매 여부·최종가를 선계산해 여러 그룹 연산을 공유.
+**트레이드오프**: 파이프라인이 길어져 가독성↓ → 주석과 단계 분리로 보완.
+
+### 경매 타이머: 인메모리 + 재시작 복구 (vs 잡 큐)
+
+**결정**: `setTimeout`을 인메모리 `Map`으로 관리하고, 서버 시작 시 DB에서 진행 중 경매를 조회해 타이머 재등록.
+**이유**: Redis/잡 큐 도입은 인프라 복잡도가 큼. 단일 서버 규모에선 인메모리 + 부팅 복구로 충분.
+**트레이드오프**: 다중 인스턴스로 수평 확장 시엔 중앙 스케줄러(예: BullMQ)가 필요.
+
+### 동시 입찰: 원자적 `findOneAndUpdate` (vs 트랜잭션/락)
+
+**결정**: 현재가 비교 조건을 쿼리에 포함한 단일 원자 연산으로 단 하나의 입찰만 통과.
+**이유**: 명시적 락 없이 DB 레벨에서 경쟁 조건(TOCTOU)을 차단해 간결하고 빠름.
+**트레이드오프**: 실패한 입찰은 409로 재시도 유도 → 사용자에게 현재가 재확인을 요청.
+
+### 채팅: 소프트 나가기(deletedBy) + 양방향 종료(closedBy) 분리
+
+**결정**: "나가기"는 목록에서만 숨기고 상대가 메시지를 보내면 재노출, "거래 종료"는 양쪽 동의 시 송수신 차단으로 분리.
+**이유**: 단일 `isActive` 플래그로는 "보관함식 숨김"과 "완전 종료"를 동시에 표현할 수 없었음.
+**트레이드오프**: 상태 필드가 2개로 늘어 로직이 복잡 → 흐름별 테스트로 보강.
 
 ---
 
