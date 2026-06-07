@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import {
-  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
-} from "recharts";
+import { VBarChart, HBarList } from "../components/SimpleCharts";
 import axiosInstance from "../api/axios";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -251,15 +249,8 @@ function AdminPage() {
               {analytics.salesByMonth.length === 0 ? (
                 <p className="text-slate-400 text-sm py-10 text-center">거래 완료 데이터가 없습니다.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={analytics.salesByMonth} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" />
-                    <YAxis fontSize={12} stroke="#94a3b8" tickFormatter={(v) => `${(v / 10000).toLocaleString()}만`} />
-                    <Tooltip formatter={(v) => `${v.toLocaleString()}원`} />
-                    <Bar dataKey="gmv" fill="#34d399" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <VBarChart data={analytics.salesByMonth} valueKey="gmv" labelKey="month"
+                  format={(v) => `${(v / 10000).toLocaleString()}만`} labelFormat={(m) => m.slice(5)} color="#34d399" />
               )}
             </div>
 
@@ -269,15 +260,8 @@ function AdminPage() {
                 {analytics.usersByMonth.length === 0 ? (
                   <p className="text-slate-400 text-sm py-10 text-center">데이터가 없습니다.</p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={analytics.usersByMonth} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" />
-                      <YAxis fontSize={12} stroke="#94a3b8" allowDecimals={false} />
-                      <Tooltip formatter={(v) => `${v}명`} />
-                      <Line type="monotone" dataKey="count" stroke="#60a5fa" strokeWidth={2} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <VBarChart data={analytics.usersByMonth} valueKey="count" labelKey="month"
+                    format={(v) => `${v}명`} labelFormat={(m) => m.slice(5)} color="#60a5fa" height={210} />
                 )}
               </div>
 
@@ -286,20 +270,8 @@ function AdminPage() {
                 {analytics.categoryDistribution.length === 0 ? (
                   <p className="text-slate-400 text-sm py-10 text-center">데이터가 없습니다.</p>
                 ) : (
-                  <div className="space-y-2.5 py-2">
-                    {(() => {
-                      const max = Math.max(...analytics.categoryDistribution.map((c) => c.value), 1);
-                      return analytics.categoryDistribution.map((c, i) => (
-                        <div key={c.name} className="flex items-center gap-3 text-sm">
-                          <span className="w-24 shrink-0 truncate text-slate-600">{c.name}</span>
-                          <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${(c.value / max) * 100}%`, backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                          </div>
-                          <span className="w-10 shrink-0 text-right text-slate-500">{c.value}개</span>
-                        </div>
-                      ));
-                    })()}
-                  </div>
+                  <HBarList data={analytics.categoryDistribution} valueKey="value" labelKey="name"
+                    format={(v) => `${v}개`} colors={PIE_COLORS} />
                 )}
               </div>
             </div>

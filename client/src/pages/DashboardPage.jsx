@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-} from "recharts";
+import { VBarChart, HBarList } from "../components/SimpleCharts";
 import axiosInstance from "../api/axios";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -60,15 +58,8 @@ function DashboardPage() {
         {salesByMonth.length === 0 ? (
           <p className="text-slate-400 text-sm py-10 text-center">아직 판매 완료된 거래가 없습니다.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={salesByMonth} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" />
-              <YAxis fontSize={12} stroke="#94a3b8" tickFormatter={(v) => `${(v / 10000).toLocaleString()}만`} />
-              <Tooltip formatter={(v, name) => name === "revenue" ? [won(v), "매출"] : [`${v}건`, "판매수"]} />
-              <Bar dataKey="revenue" fill="#34d399" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <VBarChart data={salesByMonth} valueKey="revenue" labelKey="month"
+            format={(v) => `${(v / 10000).toLocaleString()}만`} labelFormat={(m) => m.slice(5)} color="#34d399" />
         )}
       </div>
 
@@ -79,20 +70,8 @@ function DashboardPage() {
           {statusBreakdown.length === 0 ? (
             <p className="text-slate-400 text-sm py-10 text-center">등록한 상품이 없습니다.</p>
           ) : (
-            <div className="space-y-2.5 py-2">
-              {(() => {
-                const max = Math.max(...statusBreakdown.map((c) => c.value), 1);
-                return statusBreakdown.map((c, i) => (
-                  <div key={c.name} className="flex items-center gap-3 text-sm">
-                    <span className="w-20 shrink-0 truncate text-slate-600">{c.name}</span>
-                    <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${(c.value / max) * 100}%`, backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                    </div>
-                    <span className="w-10 shrink-0 text-right text-slate-500">{c.value}개</span>
-                  </div>
-                ));
-              })()}
-            </div>
+            <HBarList data={statusBreakdown} valueKey="value" labelKey="name"
+              format={(v) => `${v}개`} colors={PIE_COLORS} labelWidth="5rem" />
           )}
         </div>
 
@@ -102,16 +81,8 @@ function DashboardPage() {
           {topViewed.length === 0 ? (
             <p className="text-slate-400 text-sm py-10 text-center">등록한 상품이 없습니다.</p>
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={topViewed} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis type="number" fontSize={12} stroke="#94a3b8" />
-                <YAxis type="category" dataKey="title" width={90} fontSize={12} stroke="#94a3b8"
-                  tickFormatter={(t) => (t.length > 8 ? `${t.slice(0, 8)}…` : t)} />
-                <Tooltip formatter={(v) => [`${v}회`, "조회수"]} />
-                <Bar dataKey="views" fill="#60a5fa" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <HBarList data={topViewed} valueKey="views" labelKey="title"
+              format={(v) => `${v}회`} colors={["#60a5fa"]} />
           )}
         </div>
       </div>
