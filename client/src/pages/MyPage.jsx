@@ -21,6 +21,7 @@ function getProductStatus(product) {
 
 function MyPage() {
   const { user, updateUser } = useAuthStore();
+  const userId = user?.id;
   usePageTitle("마이페이지");
   const [myProducts, setMyProducts] = useState([]);
   const [myBids, setMyBids] = useState([]);
@@ -45,7 +46,7 @@ function MyPage() {
   };
 
   const fetchMyPageData = useCallback(async () => {
-    if (!user) { setLoading(false); return; }
+    if (!userId) { setLoading(false); return; }
     try {
       setLoading(true);
 
@@ -56,7 +57,7 @@ function MyPage() {
         axiosInstance.get("/api/users/me/wins"),
         axiosInstance.get("/api/users/me/purchases"),
         axiosInstance.get("/api/users/me/wishlist"),
-        axiosInstance.get(`/api/reviews/user/${user.id}`),
+        axiosInstance.get(`/api/reviews/user/${userId}`),
         axiosInstance.get("/api/wanted/my"),
         axiosInstance.get("/api/wanted/my-comments"),
         axiosInstance.get("/api/auth/me"),
@@ -81,7 +82,7 @@ function MyPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, updateUser]);
+  }, [userId, updateUser]);
 
   useEffect(() => {
     fetchMyPageData();
