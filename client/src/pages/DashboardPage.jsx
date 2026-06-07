@@ -82,7 +82,7 @@ function DashboardPage() {
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie data={statusBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
+                <Pie data={statusBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}>
                   {statusBreakdown.map((entry, i) => (
                     <Cell key={entry.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                   ))}

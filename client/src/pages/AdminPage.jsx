@@ -289,7 +289,7 @@ function AdminPage() {
                 ) : (
                   <ResponsiveContainer width="100%" height={260}>
                     <PieChart>
-                      <Pie data={analytics.categoryDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
+                      <Pie data={analytics.categoryDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}>
                         {analytics.categoryDistribution.map((entry, i) => (
                           <Cell key={entry.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                         ))}
