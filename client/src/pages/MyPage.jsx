@@ -45,11 +45,12 @@ function MyPage() {
   };
 
   const fetchMyPageData = useCallback(async () => {
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
     try {
       setLoading(true);
 
-      const [productsRes, bidsRes, winsRes, purchasesRes, wishlistRes, reviewsRes, wantedRes, commentedRes, meRes, myReportsRes] = await Promise.all([
+      // 하나의 요청이 실패/지연돼도 나머지 섹션은 정상 표시되도록 allSettled 사용
+      const results = await Promise.allSettled([
         axiosInstance.get("/api/users/me/products"),
         axiosInstance.get("/api/users/me/bids"),
         axiosInstance.get("/api/users/me/wins"),
@@ -61,19 +62,20 @@ function MyPage() {
         axiosInstance.get("/api/auth/me"),
         axiosInstance.get("/api/reports/me"),
       ]);
+      const d = (i) => (results[i].status === "fulfilled" ? results[i].value.data : null);
 
-      setMyProducts(productsRes.data.products || []);
-      setMyBids(bidsRes.data.bids || []);
-      setMyWins(winsRes.data.products || []);
-      setMyPurchases(purchasesRes.data.products || []);
-      setMyWishlist(wishlistRes.data.wishlist || []);
-      setMyReviews(reviewsRes.data.reviews || []);
-      setMyWantedPosts(wantedRes.data.posts || []);
-      setMyCommentedPosts(commentedRes.data.posts || []);
-      setAverageRating(reviewsRes.data.averageRating);
-      const me = meRes.data.user;
-      updateUser({ brookScore: me.brookScore, completedDeals: me.completedDeals, totalDeals: me.totalDeals, cancelledDeals: me.cancelledDeals });
-      setMyReports(myReportsRes.data.reports || []);
+      setMyProducts(d(0)?.products || []);
+      setMyBids(d(1)?.bids || []);
+      setMyWins(d(2)?.products || []);
+      setMyPurchases(d(3)?.products || []);
+      setMyWishlist(d(4)?.wishlist || []);
+      setMyReviews(d(5)?.reviews || []);
+      setAverageRating(d(5)?.averageRating ?? null);
+      setMyWantedPosts(d(6)?.posts || []);
+      setMyCommentedPosts(d(7)?.posts || []);
+      const me = d(8)?.user;
+      if (me) updateUser({ brookScore: me.brookScore, completedDeals: me.completedDeals, totalDeals: me.totalDeals, cancelledDeals: me.cancelledDeals });
+      setMyReports(d(9)?.reports || []);
     } catch (error) {
       toast.error(error.response?.data?.message || "마이페이지 불러오기 실패");
     } finally {

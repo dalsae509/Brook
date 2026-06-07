@@ -2,6 +2,7 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
+  timeout: 20000, // 응답이 없으면 20초 후 실패 처리 (무한 로딩 방지)
 });
 
 axiosInstance.interceptors.request.use((config) => {
