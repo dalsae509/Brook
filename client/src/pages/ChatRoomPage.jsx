@@ -53,7 +53,7 @@ function ChatRoomPage() {
       if (payload.chatId !== chatId) return;
       if (payload.readBy === user.id) return;
       setMessages((prev) =>
-        prev.map((m) => (m.sender._id === user.id ? { ...m, isRead: true } : m))
+        prev.map((m) => (m.sender?._id === user.id ? { ...m, isRead: true } : m))
       );
     };
 
@@ -152,7 +152,7 @@ function ChatRoomPage() {
   if (loading) return <div className="max-w-2xl mx-auto text-center py-10 text-slate-400">불러오는 중...</div>;
   if (!chat) return <div>채팅방을 찾을 수 없습니다.</div>;
 
-  const other = user.id === chat.buyer._id ? chat.seller : chat.buyer;
+  const other = user.id === chat.buyer?._id ? chat.seller : chat.buyer;
   const closedBy = (chat.closedBy || []).map(String);
   const bothClosed = closedBy.length >= 2;
   const iRequestedClose = closedBy.includes(user.id);
@@ -170,10 +170,10 @@ function ChatRoomPage() {
           ← 목록
         </button>
         <div className="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center font-semibold text-slate-600 flex-shrink-0">
-          {other.name[0]}
+          {other?.name?.[0] ?? "?"}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold leading-tight">{other.name}</p>
+          <p className="font-semibold leading-tight">{other?.name ?? "탈퇴한 사용자"}</p>
           <p className="text-xs text-slate-400 truncate">
             {chat.product?.title ?? chat.wantedPost?.title ?? ""}
           </p>
@@ -220,17 +220,17 @@ function ChatRoomPage() {
           <p className="text-center text-slate-400 text-sm mt-8">첫 메시지를 보내보세요.</p>
         ) : (
           messages.map((msg) => {
-            const isMine = msg.sender._id === user.id;
+            const isMine = msg.sender?._id === user.id;
             return (
               <div key={msg._id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 {!isMine && (
                   <div className="w-8 h-8 bg-slate-300 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0 self-end">
-                    {msg.sender.name[0]}
+                    {msg.sender?.name?.[0] ?? "?"}
                   </div>
                 )}
                 <div>
                   {!isMine && (
-                    <p className="text-xs text-slate-500 mb-1 ml-1">{msg.sender.name}</p>
+                    <p className="text-xs text-slate-500 mb-1 ml-1">{msg.sender?.name ?? "탈퇴한 사용자"}</p>
                   )}
                   <div className={`rounded-2xl text-sm max-w-xs lg:max-w-md overflow-hidden ${
                     isMine ? "rounded-tr-sm" : "rounded-tl-sm"

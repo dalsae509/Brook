@@ -293,7 +293,7 @@ function MyPage() {
             {myReviews.map((review) => (
               <div key={review._id} className="bg-white rounded-2xl shadow p-5">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium">{review.reviewer.name}</span>
+                  <span className="font-medium">{review.reviewer?.name ?? "탈퇴한 사용자"}</span>
                   <span className="text-xs text-slate-400">
                     {new Date(review.createdAt).toLocaleDateString()}
                   </span>

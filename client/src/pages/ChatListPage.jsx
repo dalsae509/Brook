@@ -63,7 +63,7 @@ function ChatListPage() {
       ) : (
         <div className="space-y-3">
           {chats.map((chat) => {
-            const other = user.id === chat.buyer._id ? chat.seller : chat.buyer;
+            const other = user.id === chat.buyer?._id ? chat.seller : chat.buyer;
             return (
               <div key={chat._id} className="relative group">
               <Link
@@ -82,7 +82,7 @@ function ChatListPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold truncate">{other.name}</p>
+                    <p className="font-semibold truncate">{other?.name ?? "탈퇴한 사용자"}</p>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                       {chat.unreadCount > 0 && (
                         <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">

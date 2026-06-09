@@ -155,7 +155,7 @@ function SellerProfilePage() {
             {reviews.map((review) => (
               <div key={review._id} className="bg-white rounded-2xl shadow p-4">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-sm">{review.reviewer.name}</span>
+                  <span className="font-medium text-sm">{review.reviewer?.name ?? "탈퇴한 사용자"}</span>
                   <span className="text-xs text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-yellow-500 text-sm">

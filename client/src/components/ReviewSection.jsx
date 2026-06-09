@@ -46,7 +46,7 @@ function ReviewSection({ productId, product, user }) {
       const list = res.data.reviews || [];
       setReviews(list);
       if (user) {
-        setMyReview(list.find((r) => r.reviewer._id === user.id) ?? null);
+        setMyReview(list.find((r) => r.reviewer?._id === user.id) ?? null);
       }
     } catch (error) {
       console.error(error);
@@ -123,7 +123,7 @@ function ReviewSection({ productId, product, user }) {
           {reviews.map((review) => (
             <div key={review._id} className="border rounded-xl p-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-sm">{review.reviewer.name}</span>
+                <span className="font-medium text-sm">{review.reviewer?.name ?? "탈퇴한 사용자"}</span>
                 <span className="text-xs text-slate-400">
                   {new Date(review.createdAt).toLocaleDateString()}
                 </span>

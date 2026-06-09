@@ -42,7 +42,7 @@ function WantedDetailPage() {
       const ids = new Set(
         (res.data.chats || [])
           .filter((c) => c.wantedPost?._id === id || c.wantedPost === id)
-          .map((c) => c.seller._id)
+          .map((c) => c.seller?._id)
       );
       setChattedSellerIds(ids);
     }).catch(() => {});
@@ -254,13 +254,13 @@ function WantedDetailPage() {
           <div className="space-y-3">
             {comments.map((comment) => (
               <div key={comment._id} className={`border rounded-xl p-4 ${
-                chattedSellerIds.has(comment.author._id) ? "border-blue-200 bg-blue-50" : ""
+                chattedSellerIds.has(comment.author?._id) ? "border-blue-200 bg-blue-50" : ""
               }`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-sm">{comment.author?.name ?? "탈퇴한 사용자"}</span>
-                      {chattedSellerIds.has(comment.author._id) && (
+                      {chattedSellerIds.has(comment.author?._id) && (
                         <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">채팅 중</span>
                       )}
                       <span className="text-xs text-slate-400">{new Date(comment.createdAt).toLocaleDateString()}</span>
@@ -268,8 +268,8 @@ function WantedDetailPage() {
                     <p className="text-slate-700 text-sm">{comment.content}</p>
                   </div>
                   <div className="flex gap-2 shrink-0 items-start">
-                    {isAuthor && post.status === "open" && comment.author._id !== user.id && (
-                      chattedSellerIds.has(comment.author._id) ? (
+                    {isAuthor && post.status === "open" && comment.author?._id !== user.id && (
+                      chattedSellerIds.has(comment.author?._id) ? (
                         <button
                           onClick={() => navigate("/chats")}
                           className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
@@ -278,22 +278,22 @@ function WantedDetailPage() {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleStartChat(comment._id, comment.author._id)}
+                          onClick={() => handleStartChat(comment._id, comment.author?._id)}
                           className="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg hover:bg-slate-700"
                         >
                           채팅하기
                         </button>
                       )
                     )}
-                    {user && comment.author && comment.author._id !== user.id && (
+                    {user && comment.author && comment.author?._id !== user.id && (
                       <button
-                        onClick={() => setReportTarget({ userId: comment.author._id, userName: comment.author.name })}
+                        onClick={() => setReportTarget({ userId: comment.author?._id, userName: comment.author.name })}
                         className="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-1 rounded-lg"
                       >
                         신고
                       </button>
                     )}
-                    {user && comment.author._id === user.id && (
+                    {user && comment.author?._id === user.id && (
                       <button onClick={() => handleDeleteComment(comment._id)} className="text-xs text-red-400 hover:text-red-600">삭제</button>
                     )}
                   </div>
