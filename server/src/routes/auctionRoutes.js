@@ -19,6 +19,7 @@ const bidLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV !== "production" || process.env.RATE_LIMIT_DISABLED === "true",
   message: { message: "입찰 요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
 });
 
