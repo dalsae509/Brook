@@ -3,3 +3,6 @@ dist
 .env
 .DS_Store
 .vscode
+# AI 도구 설정 (저장소에서 제외)
+CLAUDE.md
+.claude/
