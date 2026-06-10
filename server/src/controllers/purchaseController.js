@@ -27,7 +27,7 @@ export const purchaseProduct = async (req, res) => {
       product = await Product.findOneAndUpdate(
         { _id: id, saleType: "fixed", fixedStatus: "available" },
         { $set: { fixedStatus: "reserved", buyer: req.user._id, reservedAt: new Date() } },
-        { new: true, session }
+        { returnDocument: "after", session }
       );
 
       if (!product) {
@@ -85,7 +85,7 @@ export const confirmTrade = async (req, res) => {
       product = await Product.findOneAndUpdate(
         { _id: id, fixedStatus: "reserved" },
         { $set: { fixedStatus: "sold", soldAt: new Date() } },
-        { new: true, session }
+        { returnDocument: "after", session }
       );
 
       if (!product) {
@@ -194,7 +194,7 @@ export const cancelPurchase = async (req, res) => {
       product = await Product.findOneAndUpdate(
         { _id: id, fixedStatus: "reserved" },
         { $set: { fixedStatus: "available", buyer: null, reservedAt: null, tradeReminderSentAt: null } },
-        { new: true, session }
+        { returnDocument: "after", session }
       );
 
       if (!product) {

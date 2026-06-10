@@ -159,7 +159,7 @@ export const placeBid = async (req, res) => {
             currentPrice: { $lte: numericAmount - bidUnit },
           },
           { $set: { currentPrice: numericAmount } },
-          { new: true, session }
+          { returnDocument: "after", session }
         );
 
         if (!updatedProduct) {
@@ -253,7 +253,7 @@ export const setProxyBid = async (req, res) => {
     await ProxyBid.findOneAndUpdate(
       { product: productId, bidder: req.user._id },
       { $set: { maxAmount: numericMax } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     );
 
     const io = req.app.get("io");

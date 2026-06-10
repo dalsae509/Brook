@@ -46,8 +46,17 @@ test("동시성: 50건 동시 입찰 시 충돌 없이 정확히 1건만 낙찰 
   );
 
   const success = statuses.filter((s) => s === 201).length;
+  const rejected = statuses.filter((s) => s !== 201).length;
   const bidCount = await Bid.countDocuments({ product: product._id });
   const updated = await Product.findById(product._id);
+
+  console.log("\n  ┌── 동시 입찰 정합성 시험 결과 ───────────────");
+  console.log(`  │ 동시 입찰 요청 : ${N}건`);
+  console.log(`  │ 낙찰 성공      : ${success}건`);
+  console.log(`  │ 충돌 거부      : ${rejected}건`);
+  console.log(`  │ 입찰 레코드    : ${bidCount}건  (중복 낙찰 ${bidCount === 1 ? "없음" : "발생!"})`);
+  console.log(`  │ 최종 현재가    : ${updated.currentPrice.toLocaleString()}원`);
+  console.log("  └────────────────────────────────────────────\n");
 
   // 핵심 불변식: 단 1건만 성공, 입찰 레코드도 1건, 현재가 정확히 1단위만 상승
   assert.equal(success, 1, "동시 입찰 중 정확히 1건만 성공해야 한다");

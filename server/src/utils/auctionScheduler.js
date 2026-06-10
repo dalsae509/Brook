@@ -34,7 +34,7 @@ export const finalizeAuction = async (productId, io, endedBy = "system") => {
     const product = await Product.findOneAndUpdate(
       { _id: productId, auctionStatus: "live" },
       { $set: { auctionStatus: "ended", endTime: new Date() } },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!product) return null;
@@ -179,7 +179,7 @@ export const triggerAuctionStart = async (productId, durationMinutes, io) => {
         scheduledDurationMinutes: null,
       },
     },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!product) return;

@@ -211,7 +211,7 @@ export const getProductDetail = async (req, res) => {
     const product = await Product.findByIdAndUpdate(
       id,
       { $inc: { views: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     )
       .populate("seller", "name brookScore completedDeals totalDeals")
       .populate("winner", "name");

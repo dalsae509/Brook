@@ -202,7 +202,7 @@ export const closeChat = async (req, res) => {
     const updated = await Chat.findByIdAndUpdate(
       chatId,
       { $addToSet: { closedBy: req.user._id } },
-      { new: true }
+      { returnDocument: "after" }
     );
     const closedBy = updated.closedBy.map(String);
     const bothClosed = closedBy.length >= 2;
